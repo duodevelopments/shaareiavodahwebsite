@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shaarei Avodah</title>
+    <style>
+        @font-face {
+            font-family: 'ShaareiAvodah';
+            src: url('51618.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            font-family: 'ShaareiAvodah', serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header-image {
+            width: 100%;
+            max-width: 650px;
+            margin: 20px auto 60px auto;
+            display: block;
+        }
+
+        .content {
+            margin-top: 30px;
+        }
+
+        .notification {
+            font-size: 22px;
+            margin: 40px 0;
+            letter-spacing: 0.5px;
+        }
+
+        .donate {
+            font-size: 22px;
+            margin: 40px 0;
+            letter-spacing: 0.5px;
+        }
+
+        a {
+            color: #000;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid transparent;
+        }
+
+        a:hover {
+            border-bottom: 1px solid #000;
+            padding-bottom: 2px;
+        }
+
+        @media (max-width: 600px) {
+            .notification, .donate {
+                font-size: 18px;
+            }
+            .content {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <img src="LogoHeader.png" alt="Shaarei Avodah Logo" class="header-image">
+
+    <div class="content">
+        <div class="notification">
+            <a href="https://shaareiavodah.retool.com/embedded/public/31608134-a820-49d9-a32b-5a726b1a5d84">Click here to sign up for notifications</a>
+        </div>
+
+        <div class="donate">
+            Donate via Zelle: <a href="mailto:zelle@shaareiavodah.org">zelle@shaareiavodah.org</a>
+        </div>
+    </div>
+</body>
+</html>
