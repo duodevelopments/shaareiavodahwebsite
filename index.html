@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shaarei Avodah</title>
+    <title>Chanichei Hayeshivos - Welcome</title>
+    <link rel="icon" type="image/svg+xml" href="Logo 2.0.svg">
+    <meta name="description" content="Chanichei Hayeshivos - Join our community. Sign up for notifications and support our mission.">
     <style>
         @font-face {
             font-family: 'ShaareiAvodah';
@@ -12,86 +14,350 @@
             font-style: normal;
         }
 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'ShaareiAvodah', serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            text-align: center;
+            font-family: 'ShaareiAvodah', Georgia, serif;
             color: #333;
             line-height: 1.6;
+            background-color: #fafafa;
         }
 
-        .header-image {
+        /* Header / Hero Section */
+        .hero {
+            background-color: #fff;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .logo {
+            max-width: 500px;
+            width: 90%;
+            margin-bottom: 20px;
+        }
+
+        .tagline {
+            font-size: 24px;
+            color: #555;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+
+        /* Section Styling */
+        section {
+            padding: 60px 20px;
             width: 100%;
-            max-width: 650px;
-            margin: 20px auto 20px auto;
-            display: block;
         }
 
-        /* TEMPORARY: Old business name for verification - REMOVE AFTER NAME CHANGE COMPLETE */
-        .old-business-name {
-            font-size: 28px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            margin: 10px 0 40px 0;
+        .section-content {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 32px;
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+            color: #222;
+        }
+
+        /* Signup Section */
+        .signup-section {
+            background-color: #fff;
+            border-top: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .signup-description {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 30px;
+            color: #555;
+        }
+
+        .iframe-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .signup-iframe {
+            width: 100%;
+            max-width: 700px;
+            height: 500px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Donation Section */
+        .donation-section {
+            background-color: #f9f9f9;
+        }
+
+        .donation-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .donation-card {
+            background: #fff;
+            padding: 30px 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            min-width: 250px;
+        }
+
+        .donation-card h3 {
+            font-size: 22px;
+            margin-bottom: 15px;
             color: #333;
         }
-        /* END TEMPORARY */
 
-        .content {
-            margin-top: 30px;
+        .donation-card p {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 15px;
         }
 
-        .notification {
-            font-size: 22px;
-            margin: 40px 0;
-            letter-spacing: 0.5px;
+        .donation-link {
+            display: inline-block;
+            color: #000;
+            font-size: 18px;
+            text-decoration: none;
+            border-bottom: 2px solid #333;
+            padding-bottom: 2px;
+            transition: all 0.3s ease;
         }
 
-        .donate {
-            font-size: 22px;
-            margin: 40px 0;
-            letter-spacing: 0.5px;
+        .donation-link:hover {
+            color: #555;
+            border-bottom-color: #555;
         }
 
-        a {
+        .coming-soon {
+            display: inline-block;
+            font-size: 16px;
+            color: #888;
+            font-style: italic;
+            padding: 8px 16px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+
+        /* About Section */
+        .about-section {
+            background-color: #fff;
+        }
+
+        .about-content {
+            text-align: center;
+            font-size: 18px;
+            color: #555;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Location Section */
+        .location-section {
+            background-color: #f5f5f5;
+        }
+
+        .location-content {
+            text-align: center;
+        }
+
+        .address {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .address-line {
+            display: block;
+            margin: 5px 0;
+        }
+
+        /* Contact Section */
+        .contact-section {
+            background-color: #fff;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .contact-info {
+            text-align: center;
+        }
+
+        .contact-item {
+            font-size: 18px;
+            margin: 15px 0;
+            color: #555;
+        }
+
+        .contact-item a {
             color: #000;
             text-decoration: none;
-            transition: all 0.3s ease;
             border-bottom: 1px solid transparent;
+            transition: all 0.3s ease;
         }
 
-        a:hover {
-            border-bottom: 1px solid #000;
-            padding-bottom: 2px;
+        .contact-item a:hover {
+            border-bottom-color: #000;
         }
 
+        /* Footer */
+        footer {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        footer p {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        footer .footer-name {
+            font-size: 18px;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        /* Responsive Design */
         @media (max-width: 600px) {
-            .notification, .donate {
+            .hero {
+                padding: 40px 15px;
+            }
+
+            .logo {
+                max-width: 300px;
+            }
+
+            .tagline {
                 font-size: 18px;
             }
-            .content {
-                padding: 20px 15px;
+
+            section {
+                padding: 40px 15px;
+            }
+
+            .section-title {
+                font-size: 26px;
+            }
+
+            .signup-iframe {
+                height: 550px;
+            }
+
+            .donation-card {
+                min-width: 100%;
+                padding: 25px 20px;
+            }
+
+            .about-content,
+            .contact-item {
+                font-size: 16px;
+            }
+
+            .address {
+                font-size: 18px;
             }
         }
     </style>
 </head>
 <body>
-    <img src="LogoHeader.png" alt="Shaarei Avodah Logo" class="header-image">
 
-    <!-- TEMPORARY: Old business name for verification - REMOVE AFTER NAME CHANGE COMPLETE -->
-    <div class="old-business-name">CHANICHEI HAYESHIVOS</div>
-    <!-- END TEMPORARY -->
+    <!-- Hero Section -->
+    <header class="hero">
+        <img src="LogoHeader.png" alt="Chanichei Hayeshivos Logo" class="logo">
+        <p class="tagline">CHANICHEI HAYESHIVOS</p>
+    </header>
 
-    <div class="content">
-        <div class="notification">
-            <a href="https://shaareiavodah.retool.com/embedded/public/31608134-a820-49d9-a32b-5a726b1a5d84">Click here to sign up for notifications</a>
+    <!-- About Section -->
+    <section class="about-section">
+        <div class="section-content">
+            <h2 class="section-title">About Us</h2>
+            <div class="about-content">
+                <p>Chanichei Hayeshivos is dedicated to serving our community with commitment and excellence. We invite you to join us and be part of our growing family.</p>
+            </div>
         </div>
+    </section>
 
-        <div class="donate">
-            Donate via Zelle: <a href="mailto:zelle@shaareiavodah.org">zelle@shaareiavodah.org</a>
+    <!-- Donation Section -->
+    <section class="donation-section">
+        <div class="section-content">
+            <h2 class="section-title">Support Our Mission</h2>
+            <div class="donation-options">
+                <div class="donation-card">
+                    <h3>Donate via Zelle</h3>
+                    <p>Quick and easy donations directly to our account</p>
+                    <a href="mailto:donate@shaareiavodah.org" class="donation-link">donate@shaareiavodah.org</a>
+                </div>
+                <div class="donation-card">
+                    <h3>Credit Card</h3>
+                    <p>Secure online credit card payments</p>
+                    <span class="coming-soon">Coming Soon</span>
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
+
+    <!-- Signup Section -->
+    <section class="signup-section">
+        <div class="section-content">
+            <h2 class="section-title">Stay Connected</h2>
+            <p class="signup-description">Sign up below to receive notifications and stay updated with our latest news and events.</p>
+            <div class="iframe-container">
+                <iframe
+                    src="https://shaareiavodah.retool.com/embedded/public/31608134-a820-49d9-a32b-5a726b1a5d84"
+                    class="signup-iframe"
+                    title="Notification Signup Form"
+                    loading="lazy">
+                </iframe>
+            </div>
+        </div>
+    </section>
+
+    <!-- Location Section -->
+    <section class="location-section">
+        <div class="section-content">
+            <h2 class="section-title">Our Location</h2>
+            <div class="location-content">
+                <address class="address">
+                    <span class="address-line">16325 Harden Circle</span>
+                    <span class="address-line">Southfield, MI 48075</span>
+                </address>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section">
+        <div class="section-content">
+            <h2 class="section-title">Contact Us</h2>
+            <div class="contact-info">
+                <div class="contact-item">
+                    Email: <a href="mailto:info@shaareiavodah.org">info@shaareiavodah.org</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p class="footer-name">CHANICHEI HAYESHIVOS</p>
+        <p>&copy; 2026 Chanichei Hayeshivos. All rights reserved.</p>
+    </footer>
+
 </body>
 </html>
