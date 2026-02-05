@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You - Shaarei Avodah</title>
+    <link rel="icon" type="image/svg+xml" href="Logo 2.0.svg">
+    <meta name="description" content="Thank you for your donation to Shaarei Avodah.">
+    <style>
+        @font-face {
+            font-family: 'ShaareiAvodah';
+            src: url('51618.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'ShaareiAvodah', Georgia, serif;
+            color: #333;
+            line-height: 1.6;
+            background-color: #fafafa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: #fff;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header a {
+            text-decoration: none;
+        }
+
+        .logo {
+            max-width: 200px;
+            width: 90%;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .success-container {
+            background: #fff;
+            padding: 50px 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .checkmark {
+            width: 80px;
+            height: 80px;
+            background: #4CAF50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+        }
+
+        .checkmark svg {
+            width: 40px;
+            height: 40px;
+            fill: white;
+        }
+
+        .success-title {
+            font-size: 28px;
+            margin-bottom: 15px;
+            color: #222;
+        }
+
+        .success-message {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .success-detail {
+            font-size: 16px;
+            color: #777;
+            margin-bottom: 30px;
+        }
+
+        .home-btn {
+            display: inline-block;
+            padding: 14px 32px;
+            background: #333;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 16px;
+            transition: background 0.3s ease;
+        }
+
+        .home-btn:hover {
+            background: #555;
+        }
+
+        footer {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+        }
+
+        footer p {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 600px) {
+            .success-container {
+                padding: 40px 25px;
+            }
+
+            .success-title {
+                font-size: 24px;
+            }
+
+            .success-message {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <a href="index.html">
+            <img src="LogoHeader.png" alt="Shaarei Avodah Logo" class="logo">
+        </a>
+    </header>
+
+    <main>
+        <div class="success-container">
+            <div class="checkmark">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                </svg>
+            </div>
+            <h1 class="success-title">Thank You!</h1>
+            <p class="success-message">Your donation has been received.</p>
+            <p class="success-detail" id="success-detail">Your generosity helps us continue our mission.</p>
+            <a href="index.html" class="home-btn">Return to Homepage</a>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Shaarei Avodah. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Customize message based on donation type
+        const urlParams = new URLSearchParams(window.location.search);
+        const type = urlParams.get('type');
+        const detailEl = document.getElementById('success-detail');
+
+        if (type === 'monthly') {
+            detailEl.textContent = 'Your monthly donation has been set up. Thank you for your ongoing support!';
+        } else {
+            detailEl.textContent = 'Your generous one-time donation helps us continue our mission.';
+        }
+    </script>
+
+</body>
+</html>
