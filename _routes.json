@@ -1,5 +1,5 @@
 {
   "version": 1,
-  "include": ["/functions/api/*"],
+  "include": ["/api/*"],
   "exclude": []
 }
