@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shaarei Avodah — Admin</title>
+    <link rel="icon" type="image/svg+xml" href="/Logo 2.0.svg">
+    <style>
+        @font-face {
+            font-family: 'ShaareiAvodah';
+            src: url('/51618.otf') format('opentype');
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'ShaareiAvodah', Georgia, serif;
+            color: #333;
+            background: #fafafa;
+            padding: 40px 20px 80px;
+            line-height: 1.5;
+        }
+        .page { max-width: 800px; margin: 0 auto; }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        header h1 { font-size: 28px; letter-spacing: 1px; margin-bottom: 4px; }
+        header .subtitle { font-size: 14px; color: #888; letter-spacing: 1px; text-transform: uppercase; }
+        .section {
+            background: #fff;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+            margin-bottom: 24px;
+        }
+        .section h2 {
+            font-size: 16px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 14px;
+        }
+        .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+        .tile {
+            display: block;
+            padding: 20px;
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+            transition: background .1s, border-color .1s;
+        }
+        .tile:hover { background: #f0e9dc; border-color: #7a5b28; }
+        .tile-title { font-size: 18px; margin-bottom: 4px; }
+        .tile-desc { font-size: 13px; color: #888; }
+        .form-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; align-items: flex-end; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
+        .form-group label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: .5px; }
+        .form-group input {
+            font-family: inherit;
+            font-size: 14px;
+            padding: 7px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+        }
+        button {
+            font-family: inherit;
+            font-size: 14px;
+            padding: 9px 16px;
+            background: #fff;
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover { background: #f5f5f5; }
+        button.primary { background: #7a5b28; color: #fff; border-color: #7a5b28; }
+        button.primary:hover { background: #654a20; }
+        button:disabled { opacity: .5; cursor: wait; }
+        .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .hint { font-size: 12px; color: #888; margin-top: 6px; }
+        .log {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 14px;
+            max-height: 260px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .log:empty { display: none; }
+        .log-entry { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; }
+        .log-entry:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .log-entry.ok { color: #2e7d32; }
+        .log-entry.err { color: #c62828; }
+        .log-entry .meta { color: #888; font-size: 11px; }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header>
+            <h1>Shaarei Avodah</h1>
+            <div class="subtitle">Admin Dashboard</div>
+        </header>
+
+        <section class="section">
+            <h2>Manage</h2>
+            <div class="tiles">
+                <a class="tile" href="/admin/week.html">
+                    <div class="tile-title">Week</div>
+                    <div class="tile-desc">Edit times, preview, send the weekly email/SMS, export docx/PDF.</div>
+                </a>
+                <a class="tile" href="/admin/announcements.html">
+                    <div class="tile-title">Announcements</div>
+                    <div class="tile-desc">Mazel tovs, kiddushim, yahrzeits that auto-surface on matching weeks.</div>
+                </a>
+                <a class="tile" href="/admin/subscribers.html">
+                    <div class="tile-title">Subscribers</div>
+                    <div class="tile-desc">View, add, remove, bulk import email and SMS subscribers.</div>
+                </a>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Quick Preview</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="previewSunday">Week of (Sunday)</label>
+                    <input id="previewSunday" type="date">
+                </div>
+                <button class="primary" id="previewBtn">Open Email Preview</button>
+            </div>
+            <div class="hint">Renders the email HTML in a new tab without sending. No subscriber impact.</div>
+        </section>
+
+        <section class="section">
+            <h2>Cron Triggers</h2>
+            <div class="btn-row">
+                <button id="weeklyDraft">Weekly Draft</button>
+                <button id="holidayCheck">Holiday Check</button>
+                <button id="fridayDocx">Friday Docx</button>
+            </div>
+            <div class="hint">Fires the scheduled endpoints manually via the server-side proxy at <code>/api/admin/run-cron</code>. No secret needed in the browser — authenticated via Cloudflare Access in production, or trusted on localhost in dev.</div>
+            <div class="log" id="cronLog"></div>
+        </section>
+    </div>
+
+    <script>
+    // Default preview date to the Sunday of the current week.
+    (function () {
+        const now = new Date();
+        const dayOfWeek = now.getDay(); // 0=Sun
+        const sunday = new Date(now);
+        sunday.setDate(now.getDate() - dayOfWeek);
+        document.getElementById('previewSunday').value = sunday.toISOString().slice(0, 10);
+    })();
+
+    document.getElementById('previewBtn').addEventListener('click', () => {
+        const sunday = document.getElementById('previewSunday').value;
+        if (!sunday) return;
+        window.open(`/api/schedules/preview-email?sunday=${sunday}`, '_blank');
+    });
+
+    const log = document.getElementById('cronLog');
+    function addLogEntry(label, ok, body) {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry ' + (ok ? 'ok' : 'err');
+        const time = new Date().toLocaleTimeString();
+        entry.innerHTML = `<div class="meta">${time} — ${label} ${ok ? '✓' : '✗'}</div>` +
+            '<div>' + escapeHtml(body) + '</div>';
+        log.prepend(entry);
+    }
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, (c) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
+
+    async function fireCron(name, btn) {
+        btn.disabled = true;
+        try {
+            const res = await fetch('/api/admin/run-cron', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name }),
+            });
+            const text = await res.text();
+            let pretty = text;
+            try { pretty = JSON.stringify(JSON.parse(text), null, 2); } catch {}
+            addLogEntry(name, res.ok, `HTTP ${res.status}\n${pretty}`);
+        } catch (err) {
+            addLogEntry(name, false, String(err));
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    document.getElementById('weeklyDraft').addEventListener('click', (e) =>
+        fireCron('weekly-draft', e.target));
+    document.getElementById('holidayCheck').addEventListener('click', (e) =>
+        fireCron('holiday-check', e.target));
+    document.getElementById('fridayDocx').addEventListener('click', (e) =>
+        fireCron('friday-docx', e.target));
+    </script>
+</body>
+</html>

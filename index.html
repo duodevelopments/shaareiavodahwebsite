@@ -306,17 +306,61 @@
     <section class="signup-section">
         <div class="section-content">
             <h2 class="section-title">Get Notified</h2>
-            <p class="signup-description">Sign up below to receive notifications and stay updated with our latest news and events.</p>
-            <div class="iframe-container">
-                <iframe
-                    src="https://shaareiavodah.retool.com/embedded/public/31608134-a820-49d9-a32b-5a726b1a5d84"
-                    class="signup-iframe"
-                    title="Notification Signup Form"
-                    loading="lazy">
-                </iframe>
-            </div>
+            <p class="signup-description">Sign up to receive weekly davening times via email and/or text message.</p>
+            <form id="signupForm" style="max-width:450px;margin:0 auto;">
+                <div style="display:flex;gap:10px;margin-bottom:14px;">
+                    <input type="text" id="signupFirst" placeholder="First name (optional)" style="flex:1;min-width:0;padding:12px 14px;font-family:inherit;font-size:16px;border:1px solid #ddd;border-radius:6px;">
+                    <input type="text" id="signupLast" placeholder="Last name (optional)" style="flex:1;min-width:0;padding:12px 14px;font-family:inherit;font-size:16px;border:1px solid #ddd;border-radius:6px;">
+                </div>
+                <div style="margin-bottom:14px;">
+                    <input type="email" id="signupEmail" placeholder="Email address" style="width:100%;padding:12px 14px;font-family:inherit;font-size:16px;border:1px solid #ddd;border-radius:6px;">
+                </div>
+                <div style="margin-bottom:14px;">
+                    <input type="tel" id="signupPhone" placeholder="Phone for texts (e.g. +13135551234)" style="width:100%;padding:12px 14px;font-family:inherit;font-size:16px;border:1px solid #ddd;border-radius:6px;">
+                </div>
+                <button type="submit" style="width:100%;padding:14px;font-family:inherit;font-size:18px;background:#333;color:#fff;border:none;border-radius:6px;cursor:pointer;letter-spacing:1px;">Subscribe</button>
+                <p id="signupMsg" style="text-align:center;margin-top:12px;font-size:15px;color:#555;display:none;"></p>
+            </form>
         </div>
     </section>
+    <script>
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const msg = document.getElementById('signupMsg');
+        msg.style.display = 'none';
+        const email = document.getElementById('signupEmail').value.trim();
+        const phone = document.getElementById('signupPhone').value.trim();
+        const firstName = document.getElementById('signupFirst').value.trim();
+        const lastName = document.getElementById('signupLast').value.trim();
+        if (!email && !phone) { msg.textContent = 'Please enter an email or phone number.'; msg.style.color = '#933'; msg.style.display = 'block'; return; }
+        try {
+            const res = await fetch('/api/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: email || undefined,
+                    phone: phone || undefined,
+                    first_name: firstName || undefined,
+                    last_name: lastName || undefined,
+                }),
+            });
+            const data = await res.json();
+            msg.textContent = data.message || (data.ok ? 'Subscribed!' : data.error);
+            msg.style.color = data.ok || res.ok ? '#2e7d32' : '#933';
+            msg.style.display = 'block';
+            if (data.ok) {
+                document.getElementById('signupEmail').value = '';
+                document.getElementById('signupPhone').value = '';
+                document.getElementById('signupFirst').value = '';
+                document.getElementById('signupLast').value = '';
+            }
+        } catch (err) {
+            msg.textContent = 'Something went wrong. Please try again.';
+            msg.style.color = '#933';
+            msg.style.display = 'block';
+        }
+    });
+    </script>
 
     <!-- Footer -->
     <footer>

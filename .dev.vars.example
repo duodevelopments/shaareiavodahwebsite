@@ -1,0 +1,26 @@
+# Copy this to .dev.vars and fill in your values.
+# .dev.vars is gitignored and used by `wrangler pages dev` for local secrets.
+
+# Email (Resend) — get API key from https://resend.com/api-keys
+RESEND_API_KEY=re_xxxxxxxxxxxx
+EMAIL_FROM=noreply@shaareiavodah.org
+
+# SMS (Twilio) — get credentials from https://console.twilio.com
+TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_FROM_NUMBER=+1313xxxxxxx
+
+# Admin
+ADMIN_EMAIL=daniel.duodevelopments@gmail.com
+ADMIN_PHONE=+1313xxxxxxx
+
+# Site
+SITE_URL=http://127.0.0.1:8788
+CRON_SECRET=change-me-to-a-random-string
+
+# Cloudflare Access — leave blank for local dev (middleware will bypass auth).
+# In production, set these via `wrangler pages secret put` after creating the
+# Access Application in the Zero Trust dashboard.
+# CF_ACCESS_TEAM_DOMAIN=yourteam.cloudflareaccess.com
+# CF_ACCESS_AUD=<Application AUD tag from Access dashboard>
+

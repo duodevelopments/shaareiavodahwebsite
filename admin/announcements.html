@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shaarei Avodah — Manage Announcements</title>
+    <link rel="icon" type="image/svg+xml" href="/Logo 2.0.svg">
+    <style>
+        @font-face {
+            font-family: 'ShaareiAvodah';
+            src: url('/51618.otf') format('opentype');
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'ShaareiAvodah', Georgia, serif;
+            color: #333;
+            background: #fafafa;
+            padding: 40px 20px 80px;
+            line-height: 1.5;
+        }
+        .page { max-width: 800px; margin: 0 auto; }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        header h1 { font-size: 28px; letter-spacing: 1px; margin-bottom: 4px; }
+        header .subtitle { font-size: 14px; color: #888; letter-spacing: 1px; text-transform: uppercase; }
+        .back { display: inline-block; margin-bottom: 20px; font-size: 14px; color: #888; text-decoration: none; }
+        .back:hover { color: #333; }
+        .form-card {
+            background: #fff;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+            margin-bottom: 24px;
+        }
+        .form-card h2 {
+            font-size: 16px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 14px;
+        }
+        .form-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; align-items: flex-end; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: .5px; }
+        .form-group input, .form-group select, .form-group textarea {
+            font-family: inherit;
+            font-size: 14px;
+            padding: 7px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+        }
+        .form-group input[type="text"] { min-width: 250px; flex: 1; }
+        .form-group textarea { min-width: 250px; flex: 1; resize: vertical; line-height: 1.4; }
+        button.primary {
+            font-family: inherit;
+            font-size: 14px;
+            padding: 9px 18px;
+            background: #333;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button.primary:hover { background: #555; }
+        table { width: 100%; background: #fff; border-collapse: collapse; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+        th, td { padding: 10px 14px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
+        td.ann-text-cell { white-space: pre-wrap; }
+        th { background: #f5f5f5; font-weight: normal; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #666; }
+        .row-btn { font-size: 12px; background: none; border: none; cursor: pointer; text-decoration: underline; margin-right: 8px; }
+        .edit-btn { color: #468; }
+        .edit-btn:hover { color: #234; }
+        .del-btn { color: #c77; }
+        .del-btn:hover { color: #933; }
+        td.editing input, td.editing select, td.editing textarea {
+            font-family: inherit; font-size: 13px; padding: 4px 6px;
+            border: 1px solid #ccc; border-radius: 3px; background: #fff; width: 100%;
+        }
+        td.editing textarea { resize: vertical; line-height: 1.4; }
+        td.editing input[type="date"] { width: auto; }
+        .empty { color: #ccc; font-style: italic; padding: 14px; }
+        #toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #333; color: #fff; padding: 10px 18px; border-radius: 4px;
+            font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 100;
+        }
+        #toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a href="/admin/week" class="back">← Back to weekly schedule</a>
+        <header>
+            <h1>Manage Announcements</h1>
+            <div class="subtitle">Schedule announcements to appear automatically on the right week</div>
+        </header>
+
+        <div class="form-card">
+            <h2>New Announcement</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Show from</label>
+                    <input type="date" id="showFrom">
+                </div>
+                <div class="form-group">
+                    <label>Show until</label>
+                    <input type="date" id="showUntil">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group" style="flex:1;">
+                    <label>Text (optional if an attachment is provided)</label>
+                    <textarea id="text" rows="3" placeholder="e.g. Bar Mitzvah of Avi Cohen — Kiddush following davening"></textarea>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group" style="flex:1;">
+                    <label>Attachment (optional, image or PDF, max 5MB)</label>
+                    <input type="file" id="attachment" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf">
+                    <span id="attachmentStatus" style="font-size:12px;color:#888;"></span>
+                </div>
+                <button class="primary" id="addBtn">Add</button>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Text</th>
+                    <th>Attachment</th>
+                    <th>Show from</th>
+                    <th>Show until</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="listBody">
+                <tr><td colspan="5" class="empty">Loading…</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div id="toast"></div>
+
+    <script>
+    async function loadAll() {
+        const res = await fetch('/api/admin/announcements');
+        const data = await res.json();
+        const body = document.getElementById('listBody');
+        body.innerHTML = '';
+        if (!data.announcements || data.announcements.length === 0) {
+            body.innerHTML = '<tr><td colspan="5" class="empty">No announcements yet.</td></tr>';
+            return;
+        }
+        for (const a of data.announcements) {
+            body.appendChild(renderRow(a));
+        }
+    }
+
+    function attachmentCell(a) {
+        if (!a.attachment_token) return '<span style="color:#ccc;">—</span>';
+        const url = '/api/attachment/' + encodeURIComponent(a.attachment_token);
+        return '📎 <a href="' + esc(url) + '" target="_blank" style="color:#468;">' + esc(a.attachment_filename) + '</a>';
+    }
+
+    function renderRow(a) {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+            '<td class="ann-text-cell">' + (a.text ? esc(a.text) : '<span style="color:#ccc;">—</span>') + '</td>' +
+            '<td>' + attachmentCell(a) + '</td>' +
+            '<td>' + esc(a.show_from) + '</td>' +
+            '<td>' + esc(a.show_until) + '</td>' +
+            '<td></td>';
+        const actions = tr.lastElementChild;
+        const edit = document.createElement('button');
+        edit.className = 'row-btn edit-btn';
+        edit.textContent = 'edit';
+        edit.addEventListener('click', () => enterEdit(tr, a));
+        actions.appendChild(edit);
+        const del = document.createElement('button');
+        del.className = 'row-btn del-btn';
+        del.textContent = 'delete';
+        del.addEventListener('click', async () => {
+            if (!confirm('Delete this announcement?')) return;
+            await fetch('/api/admin/announcements?id=' + a.id, { method: 'DELETE' });
+            toast('Deleted');
+            loadAll();
+        });
+        actions.appendChild(del);
+        return tr;
+    }
+
+    function enterEdit(tr, a) {
+        const attachmentCellEditor = a.attachment_token
+            ? '<a href="/api/attachment/' + esc(a.attachment_token) + '" target="_blank" style="color:#468;font-size:12px;">📎 ' + esc(a.attachment_filename) + '</a>' +
+              '<br><label style="font-size:11px;color:#888;"><input type="checkbox" data-f="remove_attachment"> remove</label>' +
+              '<br><input type="file" data-f="attachment_file" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" style="font-size:11px;margin-top:4px;">'
+            : '<input type="file" data-f="attachment_file" accept="image/png,image/jpeg,image/gif,image/webp,application/pdf" style="font-size:11px;">';
+        tr.innerHTML =
+            '<td class="editing"><textarea data-f="text" rows="3">' + esc(a.text || '') + '</textarea></td>' +
+            '<td class="editing">' + attachmentCellEditor + '</td>' +
+            '<td class="editing"><input data-f="show_from" type="date" value="' + esc(a.show_from) + '"></td>' +
+            '<td class="editing"><input data-f="show_until" type="date" value="' + esc(a.show_until) + '"></td>' +
+            '<td></td>';
+        const actions = tr.lastElementChild;
+        const save = document.createElement('button');
+        save.className = 'row-btn edit-btn';
+        save.textContent = 'save';
+        save.addEventListener('click', async () => {
+            const fileInput = tr.querySelector('[data-f="attachment_file"]');
+            const removeCheckbox = tr.querySelector('[data-f="remove_attachment"]');
+            const file = fileInput && fileInput.files && fileInput.files[0];
+            const remove = removeCheckbox && removeCheckbox.checked;
+            const text = tr.querySelector('[data-f="text"]').value.trim();
+
+            let attachment_id = a.attachment_id || null;
+            if (remove) attachment_id = null;
+            if (file) {
+                try {
+                    attachment_id = await uploadAttachment(file);
+                } catch (err) {
+                    toast('Upload failed: ' + err.message);
+                    return;
+                }
+            }
+
+            if (!text && attachment_id == null) {
+                toast('Provide text, an attachment, or both');
+                return;
+            }
+
+            const payload = {
+                kind: a.kind || 'general',
+                text,
+                attachment_id,
+                show_from: tr.querySelector('[data-f="show_from"]').value,
+                show_until: tr.querySelector('[data-f="show_until"]').value,
+            };
+            if (!payload.show_from || !payload.show_until) { toast('Pick show-from and show-until dates'); return; }
+            const res = await fetch('/api/admin/announcements?id=' + a.id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            if (!res.ok) {
+                const b = await res.json().catch(() => ({}));
+                toast('Error: ' + (b.error || res.status));
+                return;
+            }
+            toast('Saved');
+            loadAll();
+        });
+        actions.appendChild(save);
+        const cancel = document.createElement('button');
+        cancel.className = 'row-btn del-btn';
+        cancel.textContent = 'cancel';
+        cancel.addEventListener('click', () => {
+            const fresh = renderRow(a);
+            tr.replaceWith(fresh);
+        });
+        actions.appendChild(cancel);
+    }
+
+    async function uploadAttachment(file) {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/api/admin/attachments', { method: 'POST', body: fd });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+        return data.id;
+    }
+
+    document.getElementById('attachment').addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        const status = document.getElementById('attachmentStatus');
+        status.textContent = file ? `${file.name} (${(file.size / 1024).toFixed(0)} KB)` : '';
+    });
+
+    document.getElementById('addBtn').addEventListener('click', async () => {
+        const kind = 'general';
+        const show_from = document.getElementById('showFrom').value;
+        const show_until = document.getElementById('showUntil').value;
+        const text = document.getElementById('text').value.trim();
+        const fileInput = document.getElementById('attachment');
+        const file = fileInput.files && fileInput.files[0];
+
+        if (!text && !file) { toast('Enter announcement text or pick an attachment'); return; }
+        if (!show_from || !show_until) { toast('Pick show-from and show-until dates'); return; }
+
+        let attachment_id = null;
+        if (file) {
+            try {
+                attachment_id = await uploadAttachment(file);
+            } catch (err) {
+                toast('Upload failed: ' + err.message);
+                return;
+            }
+        }
+
+        const res = await fetch('/api/admin/announcements', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ show_from, show_until, kind, text, attachment_id }),
+        });
+        if (!res.ok) {
+            const b = await res.json().catch(() => ({}));
+            toast('Error: ' + (b.error || res.status));
+            return;
+        }
+        document.getElementById('text').value = '';
+        fileInput.value = '';
+        document.getElementById('attachmentStatus').textContent = '';
+        toast('Announcement added');
+        loadAll();
+    });
+
+    function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    let tt; function toast(m) { const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),2200); }
+
+    loadAll();
+    </script>
+</body>
+</html>

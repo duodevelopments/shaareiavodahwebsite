@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shaarei Avodah — Subscribers</title>
+    <link rel="icon" type="image/svg+xml" href="/Logo 2.0.svg">
+    <style>
+        @font-face { font-family: 'ShaareiAvodah'; src: url('/51618.otf') format('opentype'); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'ShaareiAvodah', Georgia, serif; color: #333; background: #fafafa; padding: 40px 20px 80px; line-height: 1.5; }
+        .page { max-width: 1100px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #e0e0e0; }
+        header h1 { font-size: 28px; letter-spacing: 1px; margin-bottom: 4px; }
+        header .subtitle { font-size: 14px; color: #888; letter-spacing: 1px; text-transform: uppercase; }
+        .back { display: inline-block; margin-bottom: 20px; font-size: 14px; color: #888; text-decoration: none; }
+        .back:hover { color: #333; }
+        .stats { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+        .stat { background: #fff; padding: 14px 20px; box-shadow: 0 1px 3px rgba(0,0,0,.06); flex: 1; min-width: 120px; text-align: center; }
+        .stat .num { font-size: 28px; color: #333; }
+        .stat .label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: .5px; }
+        .card { background: #fff; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-bottom: 24px; }
+        .card h2 { font-size: 16px; letter-spacing: 1px; text-transform: uppercase; color: #666; margin-bottom: 14px; }
+        .form-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; align-items: flex-end; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: .5px; }
+        .form-group input, .form-group textarea, .form-group select {
+            font-family: inherit; font-size: 14px; padding: 7px 10px;
+            border: 1px solid #ccc; border-radius: 4px; background: #fff;
+        }
+        .form-group textarea { min-height: 80px; resize: vertical; font-family: monospace; font-size: 12px; }
+        button.primary {
+            font-family: inherit; font-size: 14px; padding: 9px 18px;
+            background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer;
+        }
+        button.primary:hover { background: #555; }
+        .filters { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+        .filters label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: .5px; }
+        .filters select { font-family: inherit; font-size: 13px; padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; background: #fff; }
+        table { width: 100%; background: #fff; border-collapse: collapse; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+        th, td { padding: 10px 14px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; vertical-align: middle; }
+        th { background: #f5f5f5; font-weight: normal; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #666; }
+        tr.inactive td { opacity: .5; }
+        .channel { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; padding: 2px 7px; border-radius: 3px; }
+        .channel.email { background: #e3f2fd; color: #1565c0; }
+        .channel.sms { background: #e8f5e9; color: #2e7d32; }
+        .channel.both { background: #f3e5f5; color: #7b1fa2; }
+        .tag-chip {
+            display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 3px;
+            background: #eee; color: #555; margin-right: 4px; margin-bottom: 2px;
+        }
+        .tag-chip.weekly { background: #fff3e0; color: #9c5a1c; }
+        .row-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .icon-btn { font-size: 12px; background: none; border: none; cursor: pointer; text-decoration: underline; color: #888; }
+        .icon-btn:hover { color: #333; }
+        .icon-btn.danger { color: #c77; }
+        .icon-btn.danger:hover { color: #933; }
+        .empty { color: #ccc; font-style: italic; padding: 14px; }
+        .import-help { font-size: 11px; color: #aaa; margin-top: 6px; }
+        dialog { border: none; border-radius: 6px; padding: 0; max-width: 500px; width: 90vw; }
+        dialog::backdrop { background: rgba(0,0,0,.35); }
+        dialog .dlg-body { padding: 24px; }
+        dialog h3 { font-size: 18px; margin-bottom: 16px; }
+        dialog .form-group { margin-bottom: 10px; }
+        dialog .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+        dialog button { font-family: inherit; font-size: 13px; padding: 7px 14px; border-radius: 4px; cursor: pointer; border: 1px solid #ccc; background: #fff; }
+        dialog button.primary { background: #333; color: #fff; border-color: #333; }
+        dialog .quick-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+        dialog .quick-tag {
+            font-size: 11px; padding: 3px 8px; border-radius: 3px; cursor: pointer;
+            background: #eee; color: #555; border: none;
+        }
+        dialog .quick-tag:hover { background: #ddd; }
+        #toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #333; color: #fff; padding: 10px 18px; border-radius: 4px;
+            font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 100;
+        }
+        #toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a href="/admin/week" class="back">← Back to weekly schedule</a>
+        <header>
+            <h1>Subscribers</h1>
+            <div class="subtitle">Manage email &amp; SMS notification list</div>
+        </header>
+
+        <div class="stats" id="stats"></div>
+
+        <div class="card">
+            <h2>Add Subscriber</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First name</label>
+                    <input type="text" id="addFirst" placeholder="Avi">
+                </div>
+                <div class="form-group">
+                    <label>Last name</label>
+                    <input type="text" id="addLast" placeholder="Cohen">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="addEmail" placeholder="avi@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Phone (E.164)</label>
+                    <input type="tel" id="addPhone" placeholder="+13135551234">
+                </div>
+                <div class="form-group" style="min-width:160px;">
+                    <label>Tags (comma-separated)</label>
+                    <input type="text" id="addTags" placeholder="Weekly,Events" value="Weekly">
+                </div>
+                <button class="primary" id="addBtn">Add</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Bulk Import</h2>
+            <div class="form-group" style="margin-bottom:12px;">
+                <label>Paste CSV: first_name, last_name, email, phone, tags</label>
+                <textarea id="csvText" placeholder="Avi,Cohen,avi@example.com,+13135551234,Weekly|Events&#10;Sarah,Levi,sarah@example.com,,Weekly&#10;David,,,+13135559999,Events"></textarea>
+            </div>
+            <button class="primary" id="importBtn">Import</button>
+            <p class="import-help">Any field can be empty. Tags in the CSV cell are pipe-separated (Weekly|Events) so they don't collide with the column commas. Re-importing merges tags for existing rows.</p>
+        </div>
+
+        <div class="card">
+            <div class="filters">
+                <label for="filterTag">Filter by tag:</label>
+                <select id="filterTag"><option value="">(all)</option></select>
+                <label for="filterStatus">Status:</label>
+                <select id="filterStatus">
+                    <option value="active">Active only</option>
+                    <option value="all">Active + unsubscribed</option>
+                </select>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Channels</th>
+                        <th>Tags</th>
+                        <th>Since</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="listBody">
+                    <tr><td colspan="7" class="empty">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <dialog id="editDlg">
+        <form method="dialog" class="dlg-body">
+            <h3>Edit subscriber</h3>
+            <input type="hidden" id="editId">
+            <div class="form-group">
+                <label>First name</label>
+                <input type="text" id="editFirst">
+            </div>
+            <div class="form-group">
+                <label>Last name</label>
+                <input type="text" id="editLast">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="editEmail">
+            </div>
+            <div class="form-group">
+                <label>Phone (E.164)</label>
+                <input type="tel" id="editPhone">
+            </div>
+            <div class="form-group">
+                <label>Tags (comma-separated)</label>
+                <input type="text" id="editTags" placeholder="Weekly,Events">
+                <div class="quick-tags" id="editQuickTags"></div>
+            </div>
+            <div class="dlg-actions">
+                <button type="button" id="editCancel">Cancel</button>
+                <button type="button" class="primary" id="editSave">Save</button>
+            </div>
+        </form>
+    </dialog>
+
+    <div id="toast"></div>
+
+    <script>
+    const state = { subs: [], allTags: [] };
+
+    async function loadAll() {
+        const statusFilter = document.getElementById('filterStatus').value;
+        const tagFilter = document.getElementById('filterTag').value;
+        const params = new URLSearchParams();
+        if (statusFilter === 'all') params.set('active', 'false');
+        if (tagFilter) params.set('tag', tagFilter);
+
+        const res = await fetch('/api/admin/subscribers?' + params.toString());
+        const data = await res.json();
+        state.subs = data.subscribers || [];
+        state.allTags = data.allTags || [];
+
+        refreshTagFilter(tagFilter);
+        renderStats();
+        renderTable();
+    }
+
+    function refreshTagFilter(selectedValue) {
+        const sel = document.getElementById('filterTag');
+        const prev = selectedValue || sel.value;
+        sel.innerHTML = '<option value="">(all)</option>' +
+            state.allTags.map(t => '<option value="' + escAttr(t) + '"' + (t === prev ? ' selected' : '') + '>' + esc(t) + '</option>').join('');
+    }
+
+    function renderStats() {
+        const active = state.subs.filter(s => !s.unsubscribed_at);
+        const withEmail = active.filter(s => s.email).length;
+        const withPhone = active.filter(s => s.phone).length;
+        const weekly = active.filter(s => hasTag(s, 'Weekly')).length;
+        document.getElementById('stats').innerHTML =
+            stat(active.length, 'Active') +
+            stat(weekly, 'Weekly tag') +
+            stat(withEmail, 'With email') +
+            stat(withPhone, 'With SMS') +
+            stat(state.subs.length - active.length, 'Unsubscribed');
+    }
+
+    function renderTable() {
+        const body = document.getElementById('listBody');
+        body.innerHTML = '';
+        if (state.subs.length === 0) {
+            body.innerHTML = '<tr><td colspan="7" class="empty">No subscribers match.</td></tr>';
+            return;
+        }
+        for (const s of state.subs) {
+            const inactive = !!s.unsubscribed_at;
+            const channels = [];
+            if (s.email) channels.push('email');
+            if (s.phone) channels.push('sms');
+            const chClass = channels.length === 2 ? 'both' : channels[0] || 'email';
+            const fullName = [s.first_name, s.last_name].filter(Boolean).join(' ') || s.name || '—';
+            const tagChips = tagArray(s.tags).map(t =>
+                '<span class="tag-chip' + (t.toLowerCase() === 'weekly' ? ' weekly' : '') + '">' + esc(t) + '</span>'
+            ).join('') || '<span style="color:#ccc;">—</span>';
+
+            const tr = document.createElement('tr');
+            if (inactive) tr.className = 'inactive';
+            tr.innerHTML =
+                '<td>' + esc(fullName) + '</td>' +
+                '<td>' + esc(s.email || '—') + '</td>' +
+                '<td>' + esc(s.phone || '—') + '</td>' +
+                '<td>' + (channels.length ? '<span class="channel ' + chClass + '">' + channels.join(' + ') + '</span>' : '—') + '</td>' +
+                '<td>' + tagChips + '</td>' +
+                '<td>' + (s.subscribed_at || '').slice(0, 10) +
+                    (inactive ? '<br><span style="font-size:11px;color:#c77;">unsub ' + (s.unsubscribed_at || '').slice(0, 10) + '</span>' : '') +
+                '</td>' +
+                '<td><div class="row-actions"></div></td>';
+
+            const actions = tr.querySelector('.row-actions');
+            const editBtn = document.createElement('button');
+            editBtn.className = 'icon-btn';
+            editBtn.textContent = 'edit';
+            editBtn.addEventListener('click', () => openEdit(s));
+            actions.appendChild(editBtn);
+
+            const del = document.createElement('button');
+            del.className = 'icon-btn danger';
+            del.textContent = 'delete';
+            del.addEventListener('click', async () => {
+                if (!confirm('Remove ' + (s.email || s.phone) + '?')) return;
+                await fetch('/api/admin/subscribers?id=' + s.id, { method: 'DELETE' });
+                toast('Removed');
+                loadAll();
+            });
+            actions.appendChild(del);
+
+            body.appendChild(tr);
+        }
+    }
+
+    function openEdit(s) {
+        document.getElementById('editId').value = s.id;
+        document.getElementById('editFirst').value = s.first_name || '';
+        document.getElementById('editLast').value = s.last_name || '';
+        document.getElementById('editEmail').value = s.email || '';
+        document.getElementById('editPhone').value = s.phone || '';
+        document.getElementById('editTags').value = s.tags || '';
+
+        const chips = document.getElementById('editQuickTags');
+        chips.innerHTML = '';
+        for (const t of state.allTags) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'quick-tag';
+            btn.textContent = '+ ' + t;
+            btn.addEventListener('click', () => {
+                const input = document.getElementById('editTags');
+                const existing = tagArray(input.value);
+                if (!existing.some(x => x.toLowerCase() === t.toLowerCase())) {
+                    existing.push(t);
+                    input.value = existing.join(',');
+                }
+            });
+            chips.appendChild(btn);
+        }
+        document.getElementById('editDlg').showModal();
+    }
+
+    document.getElementById('editCancel').addEventListener('click', () => {
+        document.getElementById('editDlg').close();
+    });
+
+    document.getElementById('editSave').addEventListener('click', async () => {
+        const id = +document.getElementById('editId').value;
+        const payload = {
+            id,
+            first_name: document.getElementById('editFirst').value,
+            last_name: document.getElementById('editLast').value,
+            email: document.getElementById('editEmail').value,
+            phone: document.getElementById('editPhone').value,
+            tags: document.getElementById('editTags').value,
+        };
+        const res = await fetch('/api/admin/subscribers', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) { toast('Error: ' + (data.error || res.status)); return; }
+        document.getElementById('editDlg').close();
+        toast('Saved');
+        loadAll();
+    });
+
+    document.getElementById('addBtn').addEventListener('click', async () => {
+        const payload = {
+            first_name: document.getElementById('addFirst').value.trim() || undefined,
+            last_name: document.getElementById('addLast').value.trim() || undefined,
+            email: document.getElementById('addEmail').value.trim() || undefined,
+            phone: document.getElementById('addPhone').value.trim() || undefined,
+            tags: document.getElementById('addTags').value.trim() || undefined,
+        };
+        if (!payload.email && !payload.phone) { toast('Enter email or phone'); return; }
+        const res = await fetch('/api/admin/subscribers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) { toast('Error: ' + (data.error || res.status)); return; }
+        document.getElementById('addFirst').value = '';
+        document.getElementById('addLast').value = '';
+        document.getElementById('addEmail').value = '';
+        document.getElementById('addPhone').value = '';
+        document.getElementById('addTags').value = 'Weekly';
+        toast(data.resubscribed ? 'Resubscribed!' : 'Added!');
+        loadAll();
+    });
+
+    document.getElementById('importBtn').addEventListener('click', async () => {
+        const csv = document.getElementById('csvText').value.trim();
+        if (!csv) { toast('Paste CSV data first'); return; }
+        const rows = csv.split('\n').map(line => {
+            const parts = line.split(',').map(s => s.trim());
+            return {
+                first_name: parts[0] || undefined,
+                last_name: parts[1] || undefined,
+                email: parts[2] || undefined,
+                phone: parts[3] || undefined,
+                tags: parts[4] ? parts[4].replace(/\|/g, ',') : undefined,
+            };
+        });
+        const res = await fetch('/api/admin/subscribers/import', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rows }),
+        });
+        const data = await res.json();
+        if (!res.ok) { toast('Error: ' + (data.error || res.status)); return; }
+        document.getElementById('csvText').value = '';
+        toast('Import: ' + data.added + ' added, ' + data.resubscribed + ' resubscribed, ' + (data.updated || 0) + ' updated, ' + data.skipped + ' skipped');
+        loadAll();
+    });
+
+    document.getElementById('filterTag').addEventListener('change', loadAll);
+    document.getElementById('filterStatus').addEventListener('change', loadAll);
+
+    function tagArray(csv) {
+        return csv ? String(csv).split(',').map(t => t.trim()).filter(Boolean) : [];
+    }
+    function hasTag(s, tag) {
+        return tagArray(s.tags).some(t => t.toLowerCase() === tag.toLowerCase());
+    }
+    function stat(n, label) {
+        return '<div class="stat"><div class="num">' + n + '</div><div class="label">' + label + '</div></div>';
+    }
+    function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function escAttr(s) { return esc(s); }
+    let tt; function toast(m) { const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),2200); }
+
+    loadAll();
+    </script>
+</body>
+</html>

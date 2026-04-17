@@ -1,0 +1,17 @@
+name = "shaareiavodah-cron"
+main = "worker.js"
+compatibility_date = "2024-10-01"
+
+# Two cron schedules:
+#   1. Daily at 17:00 UTC = 1:00 PM EDT: weekly-draft (Sundays) + holiday-check (daily)
+#   2. Fridays at 12:00 UTC = 8:00 AM EDT: auto-email the printable .docx sheet
+#
+# Note: EDT = UTC-4 (summer), EST = UTC-5 (winter). In winter:
+#   - 17:00 UTC = 12:00 PM EST (1h early for the daily job)
+#   - 12:00 UTC = 7:00 AM EST (1h early for Friday docx)
+[triggers]
+crons = ["0 17 * * *", "0 12 * * 5"]
+
+# Set these via `wrangler secret put` in the cron-worker directory:
+#   SITE_URL = "https://shaareiavodah.org"  (or your Pages URL)
+#   CRON_SECRET = "some-random-token"       (must match the main site's CRON_SECRET)
