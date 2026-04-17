@@ -36,7 +36,8 @@
         button.primary:hover { background: #555; }
         .filters { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
         .filters label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: .5px; }
-        .filters select { font-family: inherit; font-size: 13px; padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; background: #fff; }
+        .filters select, .filters input { font-family: inherit; font-size: 13px; padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; background: #fff; }
+        .filters input { min-width: 220px; }
         table { width: 100%; background: #fff; border-collapse: collapse; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
         th, td { padding: 10px 14px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; vertical-align: middle; }
         th { background: #f5f5f5; font-weight: normal; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #666; }
@@ -128,7 +129,9 @@
 
         <div class="card">
             <div class="filters">
-                <label for="filterTag">Filter by tag:</label>
+                <label for="filterSearch">Search:</label>
+                <input type="text" id="filterSearch" placeholder="name, email, phone…" autocomplete="off">
+                <label for="filterTag">Tag:</label>
                 <select id="filterTag"><option value="">(all)</option></select>
                 <label for="filterStatus">Status:</label>
                 <select id="filterStatus">
@@ -233,11 +236,13 @@
     function renderTable() {
         const body = document.getElementById('listBody');
         body.innerHTML = '';
-        if (state.subs.length === 0) {
+        const q = (document.getElementById('filterSearch').value || '').trim().toLowerCase();
+        const rows = q ? state.subs.filter(s => matchesSearch(s, q)) : state.subs;
+        if (rows.length === 0) {
             body.innerHTML = '<tr><td colspan="7" class="empty">No subscribers match.</td></tr>';
             return;
         }
-        for (const s of state.subs) {
+        for (const s of rows) {
             const inactive = !!s.unsubscribed_at;
             const channels = [];
             if (s.email) channels.push('email');
@@ -268,11 +273,29 @@
             editBtn.addEventListener('click', () => openEdit(s));
             actions.appendChild(editBtn);
 
+            const unsub = document.createElement('button');
+            unsub.className = 'icon-btn';
+            unsub.textContent = inactive ? 'resubscribe' : 'unsubscribe';
+            unsub.addEventListener('click', async () => {
+                const verb = inactive ? 'Resubscribe' : 'Unsubscribe';
+                if (!confirm(verb + ' ' + (s.email || s.phone) + '?')) return;
+                const res = await fetch('/api/admin/subscribers', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: s.id, unsubscribed: !inactive }),
+                });
+                const data = await res.json();
+                if (!res.ok) { toast('Error: ' + (data.error || res.status)); return; }
+                toast(inactive ? 'Resubscribed' : 'Unsubscribed');
+                loadAll();
+            });
+            actions.appendChild(unsub);
+
             const del = document.createElement('button');
             del.className = 'icon-btn danger';
             del.textContent = 'delete';
             del.addEventListener('click', async () => {
-                if (!confirm('Remove ' + (s.email || s.phone) + '?')) return;
+                if (!confirm('Permanently remove ' + (s.email || s.phone) + '? Use Unsubscribe instead if you want to keep the record.')) return;
                 await fetch('/api/admin/subscribers?id=' + s.id, { method: 'DELETE' });
                 toast('Removed');
                 loadAll();
@@ -389,12 +412,22 @@
 
     document.getElementById('filterTag').addEventListener('change', loadAll);
     document.getElementById('filterStatus').addEventListener('change', loadAll);
+    document.getElementById('filterSearch').addEventListener('input', renderTable);
 
     function tagArray(csv) {
         return csv ? String(csv).split(',').map(t => t.trim()).filter(Boolean) : [];
     }
     function hasTag(s, tag) {
         return tagArray(s.tags).some(t => t.toLowerCase() === tag.toLowerCase());
+    }
+    function matchesSearch(s, q) {
+        const name = [s.first_name, s.last_name].filter(Boolean).join(' ').toLowerCase();
+        const phoneDigits = (s.phone || '').replace(/\D/g, '');
+        const qDigits = q.replace(/\D/g, '');
+        return name.includes(q) ||
+            (s.email || '').toLowerCase().includes(q) ||
+            (s.phone || '').toLowerCase().includes(q) ||
+            (qDigits && phoneDigits.includes(qDigits));
     }
     function stat(n, label) {
         return '<div class="stat"><div class="num">' + n + '</div><div class="label">' + label + '</div></div>';
