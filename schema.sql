@@ -15,6 +15,10 @@ CREATE TABLE IF NOT EXISTS schedule_overrides (
   -- Shape: { "2026-04-24": { "mincha": "18:30" }, "2026-04-25": { "shacharis": "09:00" } }
   -- Keys are ISO dates within the span; values are { minyan_name: "HH:MM" }.
   status        TEXT NOT NULL DEFAULT 'draft',  -- draft | published | sent
+  layout_json   TEXT,                            -- compact layout config; null → default
+  -- Shape (when set):
+  --   { "mode": "compact", "title": "חג הפסח",
+  --     "sections": [{ "title": "...", "subtitle": "...", "startDate": "...", "endDate": "..." }, ...] }
   created_at    TEXT NOT NULL,
   updated_at    TEXT NOT NULL,
   PRIMARY KEY (start_date, end_date)

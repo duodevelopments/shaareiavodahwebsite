@@ -12,8 +12,6 @@ import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 
 const COLOR = rgb(0x23 / 255, 0x21 / 255, 0x40 / 255);
-const COLOR_RULE_LAST = rgb(0xaa / 255, 0xaa / 255, 0xaa / 255);
-const COLOR_DARK = rgb(0x33 / 255, 0x33 / 255, 0x33 / 255);
 
 const HEBREW_LABELS = {
   'erev_shabbos.mincha': 'מנחה ערב שבת',
@@ -38,16 +36,21 @@ const TAG_PRIORITY = [
  * @param {object} opts
  * @param {object} opts.schedule
  * @param {Array}  opts.announcements
- * @param {Uint8Array} opts.logoData        PNG bytes (optional)
+ * @param {Uint8Array} opts.logoData        Wide banner PNG bytes (default layout, optional)
+ * @param {Uint8Array} [opts.compactLogoData] Tall ark-icon PNG bytes (compact layout, optional)
  * @param {Uint8Array} opts.hebrewFontData  Narkiss Text TTF/OTF (required)
  * @param {Uint8Array} opts.latinFontData   Bona Nova TTF (required)
+ * @param {object|null} [opts.layout]       Optional layout config; null/undefined → default layout.
+ *        Compact: { mode: 'compact', title, sections: [{ title, subtitle, startDate, endDate }, ...] }
  */
 export async function generatePDF({
   schedule,
   announcements,
   logoData,
+  compactLogoData,
   hebrewFontData,
   latinFontData,
+  layout,
 }) {
   if (!hebrewFontData) throw new Error('pdf-template: hebrewFontData required');
   if (!latinFontData) throw new Error('pdf-template: latinFontData required');
@@ -56,7 +59,48 @@ export async function generatePDF({
   pdf.registerFontkit(fontkit);
   const fontHebrew = await pdf.embedFont(hebrewFontData, { subset: false });
   const fontLatin = await pdf.embedFont(latinFontData, { subset: false });
+  const logoImg = logoData ? await pdf.embedPng(logoData) : null;
+  const compactLogoImg = compactLogoData ? await pdf.embedPng(compactLogoData) : null;
 
+  renderSchedulePage({
+    pdf, fontHebrew, fontLatin, logoImg, compactLogoImg,
+    schedule, announcements, layout,
+  });
+
+  return pdf.save();
+}
+
+/**
+ * Render a single schedule page into an existing PDFDocument. Intended for
+ * batch flows that embed fonts/logo once and add many pages.
+ *
+ * @param {object} opts
+ * @param {import('pdf-lib').PDFDocument} opts.pdf
+ * @param {*} opts.fontHebrew
+ * @param {*} opts.fontLatin
+ * @param {*} opts.logoImg     pdf-lib image handle, wide banner (default layout, optional)
+ * @param {*} [opts.compactLogoImg] pdf-lib image handle, ark icon (compact layout, optional)
+ * @param {object} opts.schedule
+ * @param {Array}  opts.announcements
+ * @param {object|null} [opts.layout]   Optional compact layout config; null → default
+ */
+export function renderSchedulePage({
+  pdf,
+  fontHebrew,
+  fontLatin,
+  logoImg,
+  compactLogoImg,
+  schedule,
+  announcements,
+  layout,
+}) {
+  if (layout && layout.mode === 'compact') {
+    renderCompactSchedulePage({
+      pdf, fontHebrew, fontLatin, logoImg: compactLogoImg,
+      schedule, announcements, layout,
+    });
+    return;
+  }
   // Letter: 8.5" x 11" = 612 x 792 pt.
   const pageWidth = 612;
   const pageHeight = 792;
@@ -67,8 +111,7 @@ export async function generatePDF({
   let cursorY = pageHeight;
 
   // --- Logo header (full-width, edge-to-edge) ---
-  if (logoData) {
-    const logoImg = await pdf.embedPng(logoData);
+  if (logoImg) {
     // Span ~8" wide (extending into margins).
     const logoWidth = pageWidth * 0.95;
     const logoHeight = (logoImg.height / logoImg.width) * logoWidth;
@@ -114,9 +157,40 @@ export async function generatePDF({
     }
   }
 
-  const rowHeight = 74;       // ~0.9"
-  const timeSize = 36;
-  const labelSize = 32;
+  // Pre-wrap announcements so we know how much vertical space they need
+  // before deciding whether to shrink the rows.
+  const annSize = 14;
+  const annLineHeight = annSize + 6;
+  const annGap = 30;
+  const annLines = [];
+  if (announcements && announcements.length > 0) {
+    const maxWidth = pageWidth - 2 * marginX;
+    for (const a of announcements) {
+      for (const paragraph of String(a.text).split(/\r?\n/)) {
+        for (const line of wrapText(paragraph, fontLatin, annSize, maxWidth)) {
+          annLines.push(line);
+        }
+      }
+    }
+  }
+  const annBlockHeight = annLines.length > 0 ? annGap + annLines.length * annLineHeight : 0;
+
+  // Auto-shrink rows to fit on a single page. Bottom margin keeps the last
+  // rule off the page edge.
+  const bottomMargin = 36;
+  const availableForRows = cursorY - bottomMargin - annBlockHeight;
+
+  const baseRowHeight = 74; // ~0.9"
+  const baseTimeSize = 36;
+  const baseLabelSize = 32;
+  const requiredRowsHeight = rows.length * baseRowHeight;
+  const scale = requiredRowsHeight > availableForRows && rows.length > 0
+    ? Math.max(0.25, availableForRows / requiredRowsHeight)
+    : 1;
+
+  const rowHeight = baseRowHeight * scale;
+  const timeSize = baseTimeSize * scale;
+  const labelSize = baseLabelSize * scale;
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
@@ -145,42 +219,275 @@ export async function generatePDF({
     });
 
     cursorY -= rowHeight;
-    // Bottom rule.
-    const ruleColor = isLast ? COLOR_RULE_LAST : COLOR;
-    const ruleThickness = isLast ? 0.6 : 0.8;
-    page.drawLine({
-      start: { x: marginX, y: cursorY + 4 },
-      end: { x: pageWidth - marginX, y: cursorY + 4 },
-      thickness: ruleThickness,
-      color: ruleColor,
-    });
+    // Bottom rule (skip after the last row).
+    if (!isLast) {
+      page.drawLine({
+        start: { x: marginX, y: cursorY + 4 },
+        end: { x: pageWidth - marginX, y: cursorY + 4 },
+        thickness: 0.8,
+        color: COLOR,
+      });
+    }
   }
 
   // --- Announcements ---
+  if (annLines.length > 0) {
+    cursorY -= annGap;
+    for (const line of annLines) {
+      const w = fontLatin.widthOfTextAtSize(line, annSize);
+      cursorY -= annLineHeight;
+      page.drawText(line, {
+        x: (pageWidth - w) / 2,
+        y: cursorY,
+        size: annSize,
+        font: fontLatin,
+        color: COLOR_DARK,
+      });
+    }
+  }
+}
+
+/**
+ * Compact multi-section layout — small left logo, right-aligned title, sections
+ * grouped by date range, no per-row rules. Used for long spans (Pesach, Sukkos)
+ * where the default layout would overflow.
+ *
+ * Layout shape: { mode:'compact', title, sections:[{ title, subtitle, startDate, endDate }] }
+ */
+function renderCompactSchedulePage({
+  pdf,
+  fontHebrew,
+  fontLatin,
+  logoImg,
+  schedule,
+  announcements,
+  layout,
+}) {
+  const pageWidth = 612;
+  const pageHeight = 792;
+  const page = pdf.addPage([pageWidth, pageHeight]);
+
+  const marginX = 54; // 0.75"
+  const logoColumnWidth = 70;
+  const contentLeft = marginX + logoColumnWidth + 14;
+  const contentRight = pageWidth - marginX;
+
+  let topY = pageHeight - 30;
+
+  // --- Logo (ark icon, top-left) + decorative vertical bar down the page ---
+  if (logoImg) {
+    const logoW = logoColumnWidth;
+    const logoH = (logoImg.height / logoImg.width) * logoW;
+    const logoX = marginX;
+    const logoTopY = topY;
+    const logoBottomY = logoTopY - logoH;
+    page.drawImage(logoImg, {
+      x: logoX,
+      y: logoBottomY,
+      width: logoW,
+      height: logoH,
+    });
+    // Thin vertical line from the base of the icon down to near the bottom
+    // margin, with a small horizontal cap at the bottom — mirrors the
+    // decorative element from the original Pesach template.
+    const barX = logoX + logoW / 2;
+    const barTop = logoBottomY + 2;
+    const barBottom = 48;
+    page.drawLine({
+      start: { x: barX, y: barTop },
+      end: { x: barX, y: barBottom },
+      thickness: 0.7,
+      color: COLOR,
+    });
+    const capHalf = 5;
+    page.drawLine({
+      start: { x: barX - capHalf, y: barBottom },
+      end: { x: barX + capHalf, y: barBottom },
+      thickness: 0.7,
+      color: COLOR,
+    });
+  }
+
+  // --- Title (top-right, right-aligned) ---
+  const titleHe = stripNikud(layout.title || schedule.label || schedule.parsha?.he || '');
+  const titleSize = 40;
+  if (titleHe) {
+    const w = fontHebrew.widthOfTextAtSize(titleHe, titleSize);
+    page.drawText(titleHe, {
+      x: contentRight - w,
+      y: topY - titleSize,
+      size: titleSize,
+      font: fontHebrew,
+      color: COLOR,
+    });
+  }
+  // Horizontal rule under the title.
+  let cursorY = topY - titleSize - 14;
+  page.drawLine({
+    start: { x: contentLeft, y: cursorY },
+    end: { x: contentRight, y: cursorY },
+    thickness: 1,
+    color: COLOR,
+  });
+  cursorY -= 18;
+
+  // --- Group rows into sections by date ---
+  const allRows = [];
+  for (const day of schedule.days) {
+    for (const minyan of ['shacharis', 'mincha', 'maariv']) {
+      const info = day.times[minyan];
+      if (!info) continue;
+      allRows.push({
+        date: day.date,
+        time: to12hShort(info.time),
+        label: getHebrewLabel(day, minyan),
+      });
+    }
+  }
+  const sections = (layout.sections || []).map((s) => ({
+    title: stripNikud(s.title || ''),
+    subtitle: stripNikud(s.subtitle || ''),
+    rows: allRows.filter((r) => r.date >= s.startDate && r.date <= s.endDate),
+  }));
+
+  // Pre-wrap announcements (same as default layout).
+  const annSize = 12;
+  const annLineHeight = annSize + 5;
+  const annGap = 18;
+  const annLines = [];
   if (announcements && announcements.length > 0) {
-    cursorY -= 30;
-    const annSize = 14;
-    const maxWidth = pageWidth - 2 * marginX;
+    const maxWidth = contentRight - contentLeft;
     for (const a of announcements) {
-      const paragraphs = String(a.text).split(/\r?\n/);
-      for (const paragraph of paragraphs) {
-        const wrapped = wrapText(paragraph, fontLatin, annSize, maxWidth);
-        for (const line of wrapped) {
-          const w = fontLatin.widthOfTextAtSize(line, annSize);
-          cursorY -= annSize + 6;
-          page.drawText(line, {
-            x: (pageWidth - w) / 2,
-            y: cursorY,
-            size: annSize,
-            font: fontLatin,
-            color: COLOR_DARK,
-          });
+      for (const paragraph of String(a.text).split(/\r?\n/)) {
+        for (const line of wrapText(paragraph, fontLatin, annSize, maxWidth)) {
+          annLines.push(line);
         }
       }
     }
   }
+  const annBlockHeight = annLines.length > 0 ? annGap + annLines.length * annLineHeight : 0;
 
-  return pdf.save();
+  // --- Auto-shrink: scale fonts/heights to fit ---
+  const baseSectionTitleSize = 24;
+  const baseSubtitleSize = 14;
+  const baseRowSize = 18;
+  const baseRowHeight = 26;
+  const baseSectionGap = 14;       // gap above each section title
+  const baseSubtitleGap = 4;       // gap between section title and subtitle
+  const baseHeaderToRowsGap = 10;  // gap between section header(s) and first row
+
+  const sectionsHeightAt = (s) => {
+    let h = 0;
+    for (const sec of sections) {
+      h += baseSectionGap * s;
+      h += baseSectionTitleSize * s;
+      if (sec.subtitle) h += baseSubtitleGap * s + baseSubtitleSize * s;
+      h += baseHeaderToRowsGap * s;
+      h += sec.rows.length * baseRowHeight * s;
+    }
+    return h;
+  };
+
+  const bottomMargin = 36;
+  const availableHeight = cursorY - bottomMargin - annBlockHeight;
+  const requiredHeight = sectionsHeightAt(1);
+  const scale = requiredHeight > availableHeight && requiredHeight > 0
+    ? Math.max(0.5, availableHeight / requiredHeight)
+    : 1;
+
+  const sectionTitleSize = baseSectionTitleSize * scale;
+  const subtitleSize = baseSubtitleSize * scale;
+  const rowSize = baseRowSize * scale;
+  const rowHeight = baseRowHeight * scale;
+  const sectionGap = baseSectionGap * scale;
+  const subtitleGap = baseSubtitleGap * scale;
+  const headerToRowsGap = baseHeaderToRowsGap * scale;
+
+  // --- Render sections ---
+  for (const section of sections) {
+    cursorY -= sectionGap;
+
+    // Section title — right-aligned.
+    if (section.title) {
+      const w = fontHebrew.widthOfTextAtSize(section.title, sectionTitleSize);
+      cursorY -= sectionTitleSize;
+      page.drawText(section.title, {
+        x: contentRight - w,
+        y: cursorY,
+        size: sectionTitleSize,
+        font: fontHebrew,
+        color: COLOR,
+      });
+    }
+    if (section.subtitle) {
+      cursorY -= subtitleGap;
+      const w = fontHebrew.widthOfTextAtSize(section.subtitle, subtitleSize);
+      cursorY -= subtitleSize;
+      page.drawText(section.subtitle, {
+        x: contentRight - w,
+        y: cursorY,
+        size: subtitleSize,
+        font: fontHebrew,
+        color: COLOR_DARK,
+      });
+    }
+    cursorY -= headerToRowsGap;
+
+    // Rows: time on the left of the content area, label right-aligned, with
+    // a vertical separator between them.
+    const timeX = contentLeft + 12;
+    const sepX = timeX + 56 * scale;
+    const rowBaselineOffset = rowSize / 3;
+
+    for (const row of section.rows) {
+      const rowTop = cursorY;
+      const rowBottom = cursorY - rowHeight;
+      const baseY = rowTop - rowHeight / 2 - rowBaselineOffset;
+
+      page.drawText(row.time, {
+        x: timeX,
+        y: baseY,
+        size: rowSize,
+        font: fontLatin,
+        color: COLOR,
+      });
+
+      // Vertical separator between time and label.
+      page.drawLine({
+        start: { x: sepX, y: rowTop - rowHeight * 0.15 },
+        end: { x: sepX, y: rowBottom + rowHeight * 0.15 },
+        thickness: 0.6,
+        color: COLOR,
+      });
+
+      const labelW = fontHebrew.widthOfTextAtSize(row.label, rowSize);
+      page.drawText(row.label, {
+        x: contentRight - labelW,
+        y: baseY,
+        size: rowSize,
+        font: fontHebrew,
+        color: COLOR,
+      });
+
+      cursorY -= rowHeight;
+    }
+  }
+
+  // --- Announcements ---
+  if (annLines.length > 0) {
+    cursorY -= annGap;
+    for (const line of annLines) {
+      const w = fontLatin.widthOfTextAtSize(line, annSize);
+      cursorY -= annLineHeight;
+      page.drawText(line, {
+        x: (pageWidth - w) / 2,
+        y: cursorY,
+        size: annSize,
+        font: fontLatin,
+        color: COLOR_DARK,
+      });
+    }
+  }
 }
 
 function getHebrewLabel(day, minyan) {

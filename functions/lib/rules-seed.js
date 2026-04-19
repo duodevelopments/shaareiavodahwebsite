@@ -131,6 +131,18 @@ export const seedRules = [
     value: '09:00',
     priority: 30,
   },
+  // First day of Shavuos: shacharis davens early, starting from neitz hachama
+  // after the tikkun leil all-nighter. 45 minutes before hanetz to allow for
+  // korbanos / birchos hashachar before sunrise.
+  {
+    id: 'shacharis-shavuos-day-1',
+    minyan: 'shacharis',
+    dayTypes: ['shavuos_day_1'],
+    season: 'all',
+    mode: 'relative',
+    value: { zman: 'hanetz', offsetMin: -45 },
+    priority: 30,
+  },
 
   // --- Rule 5: Shabbos / Yom Tov afternoon Mincha ----------------------------
   // "After Pesach" (summer): fixed 18:45. Rest of year (winter): shkia - 40.

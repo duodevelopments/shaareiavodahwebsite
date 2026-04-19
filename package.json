@@ -5,8 +5,8 @@
   "scripts": {
     "test": "node --test functions/lib/**/*.test.js",
     "dev": "wrangler pages dev",
-    "dev:remote": "wrangler pages dev --remote",
-    "db:migrate": "wrangler d1 execute DB --local --file=schema.sql"
+    "db:migrate": "wrangler d1 execute DB --local --file=schema.sql",
+    "db:pull-prod": "wrangler d1 export shaareiavodah --remote --output=.wrangler/prod-dump.sql --table schedule_overrides --table announcements --table subscribers --table send_log && wrangler d1 export shaareiavodah --remote --output=.wrangler/prod-attachments-schema.sql --table attachments --no-data && wrangler d1 execute DB --local --file=.wrangler/prod-dump.sql && wrangler d1 execute DB --local --file=.wrangler/prod-attachments-schema.sql"
   },
   "dependencies": {
     "@hebcal/core": "^6.2.0",

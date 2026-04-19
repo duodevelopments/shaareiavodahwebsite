@@ -32,13 +32,14 @@ export async function onRequestPost(context) {
 
   const schedule = generateWeek(sunday, seedRules);
 
-  // Merge overrides.
+  // Merge overrides + load layout.
   const overrideRow = await env.DB.prepare(
-    'SELECT overrides_json FROM schedule_overrides WHERE start_date = ? AND end_date = ?'
+    'SELECT overrides_json, layout_json FROM schedule_overrides WHERE start_date = ? AND end_date = ?'
   )
     .bind(schedule.startDate, schedule.endDate)
     .first();
 
+  let layout = null;
   if (overrideRow) {
     const overrides = JSON.parse(overrideRow.overrides_json);
     for (const day of schedule.days) {
@@ -54,6 +55,7 @@ export async function onRequestPost(context) {
         }
       }
     }
+    if (overrideRow.layout_json) layout = JSON.parse(overrideRow.layout_json);
   }
 
   // Fetch announcements.
@@ -64,20 +66,22 @@ export async function onRequestPost(context) {
     .all();
   const announcements = annRows.results || [];
 
-  // Fetch logo + both fonts from static assets.
-  const [logoRes, hebrewFontRes, latinFontRes] = await Promise.all([
+  // Fetch logos + both fonts from static assets.
+  const [logoRes, compactLogoRes, hebrewFontRes, latinFontRes] = await Promise.all([
     fetch(new URL('/d/Logo%20Header.png', request.url)),
+    fetch(new URL('/d/Logo%20Compact.png', request.url)),
     fetch(new URL('/d/51618.otf', request.url)),
     fetch(new URL('/d/BonaNova-Regular.ttf', request.url)),
   ]);
   const logoData = logoRes.ok ? new Uint8Array(await logoRes.arrayBuffer()) : null;
+  const compactLogoData = compactLogoRes.ok ? new Uint8Array(await compactLogoRes.arrayBuffer()) : null;
   const hebrewFontData = hebrewFontRes.ok ? new Uint8Array(await hebrewFontRes.arrayBuffer()) : null;
   const latinFontData = latinFontRes.ok ? new Uint8Array(await latinFontRes.arrayBuffer()) : null;
 
   // Generate both the docx and the PDF.
   const docxBuffer = await generateDocx({ schedule, announcements, logoData });
   const pdfBuffer = hebrewFontData && latinFontData
-    ? await generatePDF({ schedule, announcements, logoData, hebrewFontData, latinFontData })
+    ? await generatePDF({ schedule, announcements, logoData, compactLogoData, hebrewFontData, latinFontData, layout })
     : null;
 
   const baseName = schedule.label

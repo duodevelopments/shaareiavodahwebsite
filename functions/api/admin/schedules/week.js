@@ -35,13 +35,14 @@ export async function onRequestGet(context) {
 
     // Merge any stored overrides for this span.
     const overrideRow = await env.DB.prepare(
-      'SELECT overrides_json, status FROM schedule_overrides WHERE start_date = ? AND end_date = ?'
+      'SELECT overrides_json, status, layout_json FROM schedule_overrides WHERE start_date = ? AND end_date = ?'
     )
       .bind(schedule.startDate, schedule.endDate)
       .first();
 
     const overrides = overrideRow ? JSON.parse(overrideRow.overrides_json) : {};
     const status = overrideRow?.status || 'draft';
+    const layout = overrideRow?.layout_json ? JSON.parse(overrideRow.layout_json) : null;
 
     for (const day of schedule.days) {
       const dayOverrides = overrides[day.date] || {};
@@ -87,6 +88,7 @@ export async function onRequestGet(context) {
       status,
       schedule,
       announcements: annRows.results || [],
+      layout,
     });
   } catch (err) {
     return json({ error: String(err?.message || err) }, 500);

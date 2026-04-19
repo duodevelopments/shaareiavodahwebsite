@@ -42,6 +42,18 @@ test('Pesach II 2025 (Mon Apr 14) → yom_tov + pesach_day_2 + motzei_yom_tov', 
   assert.ok(c.dayTags.includes('motzei_yom_tov'), 'tomorrow is chol hamoed, not chag');
 });
 
+test('Shavuos I 2025 (Mon Jun 2) → yom_tov + shavuos_day_1', () => {
+  const c = buildDayContext({ year: 2025, month: 6, day: 2 });
+  assert.ok(c.dayTags.includes('yom_tov'));
+  assert.ok(c.dayTags.includes('shavuos_day_1'));
+});
+
+test('Shavuos II 2025 (Tue Jun 3) → yom_tov but NOT shavuos_day_1', () => {
+  const c = buildDayContext({ year: 2025, month: 6, day: 3 });
+  assert.ok(c.dayTags.includes('yom_tov'));
+  assert.ok(!c.dayTags.includes('shavuos_day_1'));
+});
+
 test('chol hamoed weekday is not tagged yom_tov', () => {
   const c = buildDayContext({ year: 2025, month: 4, day: 15 });
   assert.ok(c.dayTags.includes('chol_hamoed'));

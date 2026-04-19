@@ -18,7 +18,7 @@ import { resolveTimes } from './rules-engine.js';
 // span boundary gets pulled into the span. Anything further → separate sheet.
 const BUNDLE_THRESHOLD_DAYS = 2;
 
-const HOLIDAY_TAGS = new Set([
+export const HOLIDAY_TAGS = new Set([
   'yom_tov',
   'chol_hamoed',
   'erev_yom_tov',

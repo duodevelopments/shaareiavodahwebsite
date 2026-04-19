@@ -43,33 +43,95 @@
         }
         .toolbar {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
+            flex-direction: column;
+            gap: 10px;
             margin-bottom: 24px;
+        }
+        .toolbar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             flex-wrap: wrap;
         }
-        .toolbar button {
+        .toolbar-row .spacer { flex: 1; }
+        .toolbar button,
+        .toolbar select,
+        .toolbar input[type="date"] {
             font-family: inherit;
-            font-size: 15px;
+            font-size: 14px;
             background: #fff;
             color: #333;
             border: 1px solid #ccc;
-            padding: 8px 16px;
+            padding: 7px 14px;
             border-radius: 4px;
             cursor: pointer;
             transition: all .15s ease;
         }
-        .toolbar button:hover { border-color: #333; }
+        .toolbar button:hover:not(:disabled) { border-color: #333; }
         .toolbar button:disabled { opacity: .4; cursor: not-allowed; }
-        .toolbar .spacer { flex: 1; }
-        .toolbar input[type="date"] {
-            font-family: inherit;
-            font-size: 15px;
-            padding: 7px 10px;
+        .toolbar select { padding: 7px 10px; }
+        .toolbar input[type="date"] { cursor: text; }
+        .toolbar .inline-label {
+            font-size: 13px;
+            color: #888;
+            margin-left: 4px;
+        }
+        .toolbar .divider {
+            width: 1px;
+            align-self: stretch;
+            background: #e0e0e0;
+            margin: 2px 6px;
+        }
+        .toolbar button.primary {
+            background: #7a5b28;
+            color: #fff;
+            border-color: #7a5b28;
+        }
+        .toolbar button.primary:hover:not(:disabled) {
+            background: #8c6a2e;
+            border-color: #8c6a2e;
+        }
+        .toolbar .menu { position: relative; }
+        .toolbar .menu-trigger::after {
+            content: " ▾";
+            font-size: 11px;
+            color: #888;
+        }
+        .toolbar .menu.open .menu-trigger {
+            border-color: #333;
+            background: #f5f5f5;
+        }
+        .toolbar .menu-items {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            background: #fff;
             border: 1px solid #ccc;
             border-radius: 4px;
-            background: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            min-width: 220px;
+            z-index: 20;
+            padding: 4px 0;
+        }
+        .toolbar .menu.open .menu-items { display: block; }
+        .toolbar .menu-items button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            border: none;
+            border-radius: 0;
+            padding: 9px 14px;
+            background: transparent;
+            font-size: 14px;
+        }
+        .toolbar .menu-items button:hover {
+            background: #f5f5f5;
+            border: none;
+        }
+        #sendProgress {
+            font-size: 13px;
+            color: #7a5b28;
         }
         .span-banner {
             background: #fff;
@@ -147,7 +209,8 @@
         }
         table.schedule .tag.yom_tov,
         table.schedule .tag.pesach_day_1,
-        table.schedule .tag.pesach_day_2 { background: #f5e9d1; color: #7a5b28; }
+        table.schedule .tag.pesach_day_2,
+        table.schedule .tag.shavuos_day_1 { background: #f5e9d1; color: #7a5b28; }
         table.schedule .tag.shabbos { background: #e8eaf2; color: #3b4473; }
         table.schedule .tag.chol_hamoed { background: #f2f0e6; color: #6b6547; }
         table.schedule .tag.fast { background: #f2e6e6; color: #73383b; }
@@ -296,6 +359,110 @@
             color: #aaa;
         }
         .ann-hint a { color: #888; }
+        .layout-section {
+            margin-top: 24px;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        }
+        .layout-section h3 {
+            font-size: 16px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 14px;
+        }
+        .layout-mode {
+            display: flex;
+            gap: 18px;
+            margin-bottom: 14px;
+            font-size: 14px;
+            color: #444;
+        }
+        .layout-mode label { cursor: pointer; }
+        #compactConfig { border-top: 1px solid #eee; padding-top: 14px; }
+        .layout-field {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .layout-field label {
+            font-size: 13px;
+            color: #666;
+            min-width: 110px;
+        }
+        .layout-field input[type="text"] {
+            flex: 1;
+            font-family: inherit;
+            font-size: 14px;
+            padding: 7px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .layout-secs-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+        .layout-secs-table th {
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: #888;
+            padding: 6px 8px 8px;
+            font-weight: normal;
+        }
+        .layout-secs-table td {
+            padding: 4px 6px;
+            vertical-align: middle;
+        }
+        .layout-secs-table input[type="text"],
+        .layout-secs-table input[type="date"] {
+            font-family: inherit;
+            font-size: 13px;
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+        }
+        .layout-secs-table .sec-del {
+            font-size: 11px;
+            color: #c77;
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 4px;
+        }
+        .layout-secs-table .sec-del:hover { color: #933; }
+        .layout-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .layout-actions button {
+            font-family: inherit;
+            font-size: 13px;
+            padding: 7px 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+        }
+        .layout-actions button.primary {
+            background: #7a5b28;
+            color: #fff;
+            border-color: #7a5b28;
+        }
+        .layout-actions button.primary:hover { background: #8c6a2e; }
+        .layout-status {
+            font-size: 12px;
+            color: #888;
+            margin-left: auto;
+            align-self: center;
+        }
         #toast {
             position: fixed;
             bottom: 30px;
@@ -342,21 +509,34 @@
         </header>
 
         <div class="toolbar">
-            <button id="prev">◀ Previous</button>
-            <button id="today">Today</button>
-            <button id="next">Next ▶</button>
-            <span class="spacer"></span>
-            <button id="downloadDocx" title="Download a Word doc for printing">Download .docx</button>
-            <button id="downloadPdf" title="Download a PDF for printing">Download .pdf</button>
-            <button id="previewEmail" title="Preview the email in a new tab">Preview Email</button>
-            <button id="sendTest" title="Send a test email + SMS to the admin address/phone">Send Test (Email + SMS)</button>
-            <label style="font-size:13px;color:#888;">Tag:</label>
-            <select id="sendTag" title="Which tagged audience to send to">
-                <option value="Weekly" selected>Weekly</option>
-            </select>
-            <button id="sendAll" title="Send to all subscribers with the selected tag" style="background:#7a5b28;color:#fff;border-color:#7a5b28;">Send to Tag</button>
-            <label style="font-size:13px;color:#888;">Sunday:</label>
-            <input type="date" id="sundayInput">
+            <div class="toolbar-row">
+                <button id="prev">◀ Previous</button>
+                <button id="today">Today</button>
+                <button id="next">Next ▶</button>
+                <span class="spacer"></span>
+                <label class="inline-label" for="sundayInput">Sunday</label>
+                <input type="date" id="sundayInput">
+            </div>
+            <div class="toolbar-row">
+                <div class="menu" id="downloadMenu">
+                    <button class="menu-trigger" id="downloadMenuBtn" type="button" title="Download options">Download</button>
+                    <div class="menu-items">
+                        <button id="downloadDocx" type="button" title="Download a Word doc for printing">Word (.docx)</button>
+                        <button id="downloadPdf" type="button" title="Download a PDF for printing">PDF (.pdf)</button>
+                        <button id="downloadPdfBatch" type="button" title="Download a single PDF with the next 10 weeks (plus any orphan Yom Tov)">Print Next 10 Weeks (PDF)</button>
+                    </div>
+                </div>
+                <button id="previewEmail" title="Preview the email in a new tab">Preview Email</button>
+                <span class="spacer"></span>
+                <span class="divider"></span>
+                <button id="sendTest" title="Send a test email + SMS to the admin address/phone">Send Test</button>
+                <label class="inline-label" for="sendTag">Tag</label>
+                <select id="sendTag" title="Which tagged audience to send to">
+                    <option value="Weekly" selected>Weekly</option>
+                </select>
+                <button id="sendAll" class="primary" title="Send to all subscribers with the selected tag">Send to Tag</button>
+                <span id="sendProgress" style="display:none;"></span>
+            </div>
         </div>
 
         <div id="error"></div>
@@ -378,6 +558,38 @@
                 </thead>
                 <tbody id="daysBody"></tbody>
             </table>
+
+            <div class="layout-section" id="layoutSection">
+                <h3>PDF Layout</h3>
+                <div class="layout-mode">
+                    <label><input type="radio" name="layoutMode" value="default" checked> Default (single page, full-width header)</label>
+                    <label><input type="radio" name="layoutMode" value="compact"> Compact (multi-section — for long spans like Pesach)</label>
+                </div>
+                <div id="compactConfig" style="display:none;">
+                    <div class="layout-field">
+                        <label for="layoutTitle">Page title</label>
+                        <input type="text" id="layoutTitle" dir="auto" placeholder="e.g. חג הפסח">
+                    </div>
+                    <table class="layout-secs-table">
+                        <thead>
+                            <tr>
+                                <th style="width:26%;">Section title</th>
+                                <th style="width:26%;">Subtitle (optional)</th>
+                                <th style="width:18%;">Start</th>
+                                <th style="width:18%;">End</th>
+                                <th style="width:12%;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="layoutSecsBody"></tbody>
+                    </table>
+                    <button id="addSectionBtn" type="button" style="font-family:inherit;font-size:12px;background:none;border:none;color:#7a5b28;cursor:pointer;text-decoration:underline;">+ Add section</button>
+                </div>
+                <div class="layout-actions">
+                    <button id="saveLayoutBtn" type="button" class="primary">Save Layout</button>
+                    <button id="resetLayoutBtn" type="button">Clear &amp; Use Default</button>
+                    <span id="layoutStatus" class="layout-status"></span>
+                </div>
+            </div>
 
             <div class="ann-section" id="annSection">
                 <h3 class="ann-title">Announcements</h3>
@@ -452,6 +664,8 @@
         els.pill.className = 'pill' + (isHoliday ? ' holiday' : '');
         els.label.textContent = s.label || '';
         els.range.textContent = s.startDate + ' → ' + s.endDate + '  (' + s.days.length + ' days)';
+
+        renderLayoutPanel(data.layout, s);
 
         els.body.innerHTML = '';
         for (const day of s.days) {
@@ -697,21 +911,189 @@
         const tag = document.getElementById('sendTag').value || 'Weekly';
         const label = test ? 'test' : `to subscribers tagged "${tag}"`;
         if (!test && !confirm(`Send this week's schedule to all subscribers tagged "${tag}"?`)) return;
+
+        const sendBtn = document.getElementById(test ? 'sendTest' : 'sendAll');
+        const progressEl = document.getElementById('sendProgress');
+        sendBtn.disabled = true;
+        if (!test) {
+            progressEl.style.display = 'inline';
+            progressEl.textContent = 'Starting…';
+        }
+
+        const sentSoFar = { email: 0, sms: 0 };
+        const errors = [];
+        let offset = 0;
+        let total = null;
+        let alreadySent = false;
+
         try {
-            const res = await fetch('/api/admin/schedules/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sunday: state.sunday, test, tag }),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'HTTP ' + res.status);
-            const emailPart = `${data.emailSent}/${data.emailTotal} email`;
-            const smsPart = `${data.smsSent}/${data.smsTotal} SMS`;
-            toast(`Sent ${label}: ${emailPart}, ${smsPart}`);
+            while (true) {
+                const res = await fetch('/api/admin/schedules/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sunday: state.sunday, test, tag, offset, sentSoFar }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'HTTP ' + res.status);
+
+                sentSoFar.email += data.sent.email;
+                sentSoFar.sms += data.sent.sms;
+                if (data.errors && data.errors.length) errors.push(...data.errors);
+                total = data.total;
+                offset = data.nextOffset;
+                if (data.alreadySent) { alreadySent = true; break; }
+
+                if (!test && total > 0) {
+                    const done = sentSoFar.email + sentSoFar.sms;
+                    progressEl.textContent = `Sending ${done}/${total}…`;
+                }
+                if (data.done) break;
+            }
+
+            if (alreadySent) {
+                toast('Already sent for this span — no action taken.');
+            } else {
+                const emailPart = `${sentSoFar.email} email`;
+                const smsPart = `${sentSoFar.sms} SMS`;
+                const errPart = errors.length ? ` (${errors.length} error${errors.length > 1 ? 's' : ''})` : '';
+                toast(`Sent ${label}: ${emailPart}, ${smsPart}${errPart}`);
+                if (errors.length) console.warn('Send errors:', errors);
+            }
         } catch (err) {
             toast('Send failed: ' + err.message);
+        } finally {
+            sendBtn.disabled = false;
+            progressEl.style.display = 'none';
+            progressEl.textContent = '';
         }
     }
+
+    // ---------- PDF layout panel ----------
+    function renderLayoutPanel(layout, schedule) {
+        const compactCfg = document.getElementById('compactConfig');
+        const titleInput = document.getElementById('layoutTitle');
+        const secsBody = document.getElementById('layoutSecsBody');
+        const status = document.getElementById('layoutStatus');
+
+        const isCompact = layout && layout.mode === 'compact';
+        document.querySelector('input[name="layoutMode"][value="default"]').checked = !isCompact;
+        document.querySelector('input[name="layoutMode"][value="compact"]').checked = isCompact;
+        compactCfg.style.display = isCompact ? 'block' : 'none';
+        status.textContent = isCompact
+            ? 'Compact layout active for this span.'
+            : 'Default layout (no overrides).';
+
+        titleInput.value = isCompact ? (layout.title || '') : (schedule.label || '');
+
+        secsBody.innerHTML = '';
+        const sections = isCompact && Array.isArray(layout.sections) && layout.sections.length > 0
+            ? layout.sections
+            : [defaultSectionForSpan(schedule)];
+        for (const sec of sections) {
+            secsBody.appendChild(buildSectionRow(sec, schedule));
+        }
+    }
+
+    function defaultSectionForSpan(schedule) {
+        return { title: '', subtitle: '', startDate: schedule.startDate, endDate: schedule.endDate };
+    }
+
+    function buildSectionRow(section, schedule) {
+        const tr = document.createElement('tr');
+        const span = schedule || state.schedule || {};
+        tr.innerHTML =
+            '<td><input type="text" class="sec-title" dir="auto" placeholder="Section title (optional)" value="' +
+                escapeHTML(section.title || '') + '"></td>' +
+            '<td><input type="text" class="sec-subtitle" dir="auto" placeholder="Optional subtitle" value="' +
+                escapeHTML(section.subtitle || '') + '"></td>' +
+            '<td><input type="date" class="sec-start" min="' + escapeHTML(span.startDate || '') +
+                '" max="' + escapeHTML(span.endDate || '') + '" value="' + escapeHTML(section.startDate || '') + '"></td>' +
+            '<td><input type="date" class="sec-end" min="' + escapeHTML(span.startDate || '') +
+                '" max="' + escapeHTML(span.endDate || '') + '" value="' + escapeHTML(section.endDate || '') + '"></td>' +
+            '<td><button type="button" class="sec-del">remove</button></td>';
+        tr.querySelector('.sec-del').addEventListener('click', () => tr.remove());
+        return tr;
+    }
+
+    function collectSections() {
+        const rows = document.querySelectorAll('#layoutSecsBody tr');
+        return [...rows].map((tr) => ({
+            title:     tr.querySelector('.sec-title').value.trim(),
+            subtitle:  tr.querySelector('.sec-subtitle').value.trim(),
+            startDate: tr.querySelector('.sec-start').value,
+            endDate:   tr.querySelector('.sec-end').value,
+        }));
+    }
+
+    document.querySelectorAll('input[name="layoutMode"]').forEach((radio) => {
+        radio.addEventListener('change', () => {
+            const isCompact = radio.value === 'compact' && radio.checked;
+            document.getElementById('compactConfig').style.display = isCompact ? 'block' : 'none';
+            if (isCompact) {
+                const secsBody = document.getElementById('layoutSecsBody');
+                if (secsBody.children.length === 0) {
+                    secsBody.appendChild(buildSectionRow(defaultSectionForSpan(state.schedule), state.schedule));
+                }
+            }
+        });
+    });
+
+    document.getElementById('addSectionBtn').addEventListener('click', () => {
+        document.getElementById('layoutSecsBody').appendChild(
+            buildSectionRow(defaultSectionForSpan(state.schedule), state.schedule)
+        );
+    });
+
+    document.getElementById('saveLayoutBtn').addEventListener('click', async () => {
+        const mode = document.querySelector('input[name="layoutMode"]:checked').value;
+        const payload = { sunday: state.sunday };
+        if (mode === 'compact') {
+            const sections = collectSections();
+            if (sections.length === 0) {
+                toast('Add at least one section, or switch to Default layout.');
+                return;
+            }
+            payload.layout = {
+                mode: 'compact',
+                title: document.getElementById('layoutTitle').value.trim(),
+                sections,
+            };
+        } else {
+            payload.layout = null;
+        }
+        try {
+            const res = await fetch('/api/admin/schedules/layout', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+            toast('Layout saved');
+            await load(state.sunday);
+        } catch (err) {
+            toast('Save failed: ' + err.message);
+        }
+    });
+
+    document.getElementById('resetLayoutBtn').addEventListener('click', async () => {
+        if (!confirm('Clear the saved layout for this span and use the default?')) return;
+        try {
+            const res = await fetch('/api/admin/schedules/layout', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sunday: state.sunday, layout: null }),
+            });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || ('HTTP ' + res.status));
+            }
+            toast('Layout cleared');
+            await load(state.sunday);
+        } catch (err) {
+            toast('Clear failed: ' + err.message);
+        }
+    });
 
     async function loadSendTags() {
         try {
@@ -728,11 +1110,25 @@
     }
     loadSendTags();
 
+    const downloadMenu = document.getElementById('downloadMenu');
+    document.getElementById('downloadMenuBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        downloadMenu.classList.toggle('open');
+    });
+    document.addEventListener('click', (e) => {
+        if (!downloadMenu.contains(e.target)) downloadMenu.classList.remove('open');
+    });
     document.getElementById('downloadDocx').addEventListener('click', () => {
+        downloadMenu.classList.remove('open');
         window.open('/api/admin/schedules/docx?sunday=' + state.sunday, '_blank');
     });
     document.getElementById('downloadPdf').addEventListener('click', () => {
+        downloadMenu.classList.remove('open');
         window.open('/api/admin/schedules/pdf?sunday=' + state.sunday, '_blank');
+    });
+    document.getElementById('downloadPdfBatch').addEventListener('click', () => {
+        downloadMenu.classList.remove('open');
+        window.open('/api/admin/schedules/pdf-batch?sunday=' + state.sunday + '&weeks=10', '_blank');
     });
     document.getElementById('previewEmail').addEventListener('click', () => {
         window.open('/api/admin/schedules/preview-email?sunday=' + state.sunday, '_blank');

@@ -136,6 +136,9 @@ function deriveDayTags(anchor, todayEvents, tomorrowEvents) {
     // Pesach day 1 / 2 (diaspora)
     if (desc === 'Pesach I') tags.add('pesach_day_1');
     if (desc === 'Pesach II') tags.add('pesach_day_2');
+
+    // Shavuos day 1 (diaspora) — needs its own shacharis rule (hanetz - 45).
+    if (desc === 'Shavuot I') tags.add('shavuos_day_1');
   }
 
   // motzei_yom_tov: today is chag, tomorrow is not. Covers end-of-yom-tov going

@@ -19,11 +19,12 @@ export async function onRequestGet(context) {
   const [, y, m, d] = sundayParam.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   const schedule = generateWeek({ year: +y, month: +m, day: +d }, seedRules);
 
-  // Merge overrides.
+  // Merge overrides + load layout.
   const overrideRow = await env.DB.prepare(
-    'SELECT overrides_json FROM schedule_overrides WHERE start_date = ? AND end_date = ?'
+    'SELECT overrides_json, layout_json FROM schedule_overrides WHERE start_date = ? AND end_date = ?'
   ).bind(schedule.startDate, schedule.endDate).first();
 
+  let layout = null;
   if (overrideRow) {
     const overrides = JSON.parse(overrideRow.overrides_json);
     for (const day of schedule.days) {
@@ -39,6 +40,7 @@ export async function onRequestGet(context) {
         }
       }
     }
+    if (overrideRow.layout_json) layout = JSON.parse(overrideRow.layout_json);
   }
 
   // Fetch announcements.
@@ -46,9 +48,10 @@ export async function onRequestGet(context) {
     'SELECT * FROM announcements WHERE show_from <= ? AND show_until >= ? ORDER BY show_from ASC'
   ).bind(schedule.endDate, schedule.startDate).all();
 
-  // Fetch logo + both fonts from static assets.
-  const [logoRes, hebrewFontRes, latinFontRes] = await Promise.all([
+  // Fetch logos + both fonts from static assets.
+  const [logoRes, compactLogoRes, hebrewFontRes, latinFontRes] = await Promise.all([
     fetch(new URL('/d/Logo%20Header.png', context.request.url)),
+    fetch(new URL('/d/Logo%20Compact.png', context.request.url)),
     fetch(new URL('/d/51618.otf', context.request.url)),
     fetch(new URL('/d/BonaNova-Regular.ttf', context.request.url)),
   ]);
@@ -61,6 +64,7 @@ export async function onRequestGet(context) {
   }
 
   const logoData = logoRes.ok ? new Uint8Array(await logoRes.arrayBuffer()) : null;
+  const compactLogoData = compactLogoRes.ok ? new Uint8Array(await compactLogoRes.arrayBuffer()) : null;
   const hebrewFontData = new Uint8Array(await hebrewFontRes.arrayBuffer());
   const latinFontData = new Uint8Array(await latinFontRes.arrayBuffer());
 
@@ -68,8 +72,10 @@ export async function onRequestGet(context) {
     schedule,
     announcements: annRows.results || [],
     logoData,
+    compactLogoData,
     hebrewFontData,
     latinFontData,
+    layout,
   });
 
   const filename = schedule.label

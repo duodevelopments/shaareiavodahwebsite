@@ -31,7 +31,6 @@ const FONT_TITLE = 'Bona Nova';
 const FONT_LATIN = 'Bona Nova';  // used for times (digits)
 const FONT_HEBREW = 'Narkiss Text';
 const COLOR = '232140';
-const COLOR_RULE_LAST = 'AAAAAA';
 
 const HEBREW_LABELS = {
   'erev_shabbos.mincha': 'מנחה ערב שבת',
@@ -54,7 +53,6 @@ const TAG_PRIORITY = [
 
 const NO_BORDER = { style: BorderStyle.NONE, size: 0, color: '000000' };
 const RULE_BORDER = { style: BorderStyle.SINGLE, size: 8, color: COLOR };
-const RULE_BORDER_LAST = { style: BorderStyle.SINGLE, size: 6, color: COLOR_RULE_LAST };
 
 export async function generateDocx({ schedule, announcements, logoData }) {
   const rows = [];
@@ -133,7 +131,7 @@ export async function generateDocx({ schedule, announcements, logoData }) {
   const tableRows = rows.map((row, idx) => {
     const isLast = idx === rows.length - 1;
     const isFirst = idx === 0;
-    const bottomBorder = isLast ? RULE_BORDER_LAST : RULE_BORDER;
+    const bottomBorder = isLast ? NO_BORDER : RULE_BORDER;
     const topBorder = isFirst ? NO_BORDER : RULE_BORDER;
 
     return new TableRow({

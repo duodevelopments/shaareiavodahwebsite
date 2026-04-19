@@ -115,6 +115,17 @@ test('rule 4: pesach day 2 shacharis = 09:00', () => {
   assert.equal(r.shacharis.time, '09:00');
 });
 
+test('rule 4: shavuos day 1 shacharis = hanetz - 45 (trumps yom tov fixed)', () => {
+  // hanetz 05:58 → 05:13
+  const r = resolveTimes(seedRules, {
+    dayTags: ['yom_tov', 'shavuos_day_1'],
+    season: 'summer',
+    zmanim: { ...summerZmanim, hanetz: '05:58' },
+  });
+  assert.equal(r.shacharis.time, '05:13');
+  assert.equal(r.shacharis.source.ruleId, 'shacharis-shavuos-day-1');
+});
+
 // --- Rule 5 -----------------------------------------------------------------
 
 test('rule 5: shabbos mincha summer = fixed 18:45', () => {
