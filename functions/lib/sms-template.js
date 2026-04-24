@@ -1,14 +1,13 @@
 /**
  * Renders a schedule + announcements as a plain-text SMS body.
  *
- * Format (matches the gabbai's longstanding hand-written style):
+ * Format (kept ASCII-only so the base message fits in 1 GSM-7 segment;
+ * announcements can push it to 2+):
  *
- *   Shaarei Avodah Zmanim
- *   פרשת ויחי
- *   Mincha Erev Shabbos: 4:57
+ *   Mincha E"S: 4:57
  *   Shacharis: 8:35
- *   Mincha Shabbos: 4:33
- *   Maariv Motzei Shabbos: 6:08
+ *   Mincha: 4:33
+ *   Maariv: 6:08
  *
  *   <announcement text>
  *
@@ -17,11 +16,6 @@
 
 export function renderSMS({ schedule, announcements }) {
   const lines = [];
-
-  lines.push('Shaarei Avodah Zmanim');
-
-  const headline = schedule.parsha?.he || schedule.label;
-  if (headline) lines.push(headline);
 
   for (const day of schedule.days) {
     for (const minyan of ['shacharis', 'mincha', 'maariv']) {
@@ -48,10 +42,10 @@ function labelFor(day, minyan) {
   const isShabbos = day.tags?.includes('shabbos');
   const isErevShabbos = day.dayOfWeek === 'Friday';
 
-  if (isErevShabbos && minyan === 'mincha') return 'Mincha Erev Shabbos';
+  if (isErevShabbos && minyan === 'mincha') return 'Mincha E"S';
   if (isShabbos && minyan === 'shacharis') return 'Shacharis';
-  if (isShabbos && minyan === 'mincha') return 'Mincha Shabbos';
-  if (isShabbos && minyan === 'maariv') return 'Maariv Motzei Shabbos';
+  if (isShabbos && minyan === 'mincha') return 'Mincha';
+  if (isShabbos && minyan === 'maariv') return 'Maariv';
 
   const minyanName =
     minyan === 'shacharis' ? 'Shacharis' : minyan === 'mincha' ? 'Mincha' : 'Maariv';

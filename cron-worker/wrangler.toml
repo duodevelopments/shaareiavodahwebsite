@@ -14,6 +14,10 @@ preview_urls = false
 [triggers]
 crons = ["0 17 * * *", "0 12 * * 5"]
 
+[observability]
+enabled = true
+
 # Set these via `wrangler secret put` in the cron-worker directory:
 #   SITE_URL = "https://shaareiavodah.org"  (or your Pages URL)
 #   CRON_SECRET = "some-random-token"       (must match the main site's CRON_SECRET)
+#   AUTO_SEND_ENABLED = "true" | "false"    (kill switch — 'false' disables both Friday + erev-YT auto-sends)
