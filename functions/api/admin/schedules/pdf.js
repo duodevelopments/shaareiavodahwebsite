@@ -1,24 +1,40 @@
-import { generateWeek } from '../../../lib/generator.js';
+import { generateWeek, generateSpan } from '../../../lib/generator.js';
 import { seedRules } from '../../../lib/rules-seed.js';
 import { generatePDF } from '../../../lib/pdf-template.js';
 import { cacheKey, getCached, putCached } from '../../../lib/pdf-cache.js';
 
 /**
  * GET /api/schedules/pdf?sunday=YYYY-MM-DD
+ * GET /api/schedules/pdf?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
  *
- * Returns a PDF of the weekly sheet.
+ * Returns a PDF of the weekly sheet (or arbitrary span — used by the multi-week
+ * batch flow for orphan Yom Tov spans that don't align to a Sunday).
  */
 export async function onRequestGet(context) {
   const { env } = context;
   const url = new URL(context.request.url);
   const sundayParam = url.searchParams.get('sunday');
+  const startParam = url.searchParams.get('startDate');
+  const endParam = url.searchParams.get('endDate');
 
-  if (!sundayParam || !/^\d{4}-\d{2}-\d{2}$/.test(sundayParam)) {
-    return new Response('Missing or invalid ?sunday=', { status: 400 });
+  let schedule;
+  if (startParam && endParam) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(startParam) || !/^\d{4}-\d{2}-\d{2}$/.test(endParam)) {
+      return new Response('Invalid ?startDate= or ?endDate=', { status: 400 });
+    }
+    const [, ys, ms, ds] = startParam.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const [, ye, me, de] = endParam.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    schedule = generateSpan(
+      { year: +ys, month: +ms, day: +ds },
+      { year: +ye, month: +me, day: +de },
+      seedRules
+    );
+  } else if (sundayParam && /^\d{4}-\d{2}-\d{2}$/.test(sundayParam)) {
+    const [, y, m, d] = sundayParam.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    schedule = generateWeek({ year: +y, month: +m, day: +d }, seedRules);
+  } else {
+    return new Response('Missing ?sunday= or ?startDate=&endDate=', { status: 400 });
   }
-
-  const [, y, m, d] = sundayParam.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  const schedule = generateWeek({ year: +y, month: +m, day: +d }, seedRules);
 
   // Merge overrides + load layout.
   const overrideRow = await env.DB.prepare(

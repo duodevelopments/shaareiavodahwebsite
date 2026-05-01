@@ -500,6 +500,7 @@
             color: #aaa;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 </head>
 <body>
     <div class="page">
@@ -1126,9 +1127,60 @@
         downloadMenu.classList.remove('open');
         window.open('/api/admin/schedules/pdf?sunday=' + state.sunday, '_blank');
     });
-    document.getElementById('downloadPdfBatch').addEventListener('click', () => {
+    document.getElementById('downloadPdfBatch').addEventListener('click', async () => {
         downloadMenu.classList.remove('open');
-        window.open('/api/admin/schedules/pdf-batch?sunday=' + state.sunday + '&weeks=10', '_blank');
+        const btn = document.getElementById('downloadPdfBatch');
+        const origLabel = btn.textContent;
+        btn.disabled = true;
+        try {
+            // 1. Get the list of spans (cheap, no rendering).
+            btn.textContent = 'Planning…';
+            const planRes = await fetch('/api/admin/schedules/pdf-batch?sunday=' + state.sunday + '&weeks=10&plan=1');
+            if (!planRes.ok) throw new Error('Plan failed: ' + planRes.status);
+            const { spans } = await planRes.json();
+            if (!spans || spans.length === 0) throw new Error('No spans returned');
+
+            // 2. Fetch each span's PDF in parallel — separate Pages Functions
+            //    invocations, each with its own CPU budget. Cache hits return
+            //    instantly; misses render exactly one page server-side.
+            const total = spans.length;
+            let done = 0;
+            btn.textContent = `Fetching 0/${total}…`;
+            const blobs = await Promise.all(spans.map(async (s) => {
+                const res = await fetch(`/api/admin/schedules/pdf?startDate=${s.startDate}&endDate=${s.endDate}`);
+                if (!res.ok) throw new Error(`PDF ${s.startDate}: HTTP ${res.status}`);
+                const bytes = new Uint8Array(await res.arrayBuffer());
+                done++;
+                btn.textContent = `Fetching ${done}/${total}…`;
+                return bytes;
+            }));
+
+            // 3. Merge in the browser via pdf-lib (no server CPU at all).
+            btn.textContent = 'Merging…';
+            const { PDFDocument } = PDFLib;
+            const merged = await PDFDocument.create();
+            for (const bytes of blobs) {
+                const src = await PDFDocument.load(bytes);
+                const pages = await merged.copyPages(src, src.getPageIndices());
+                pages.forEach((p) => merged.addPage(p));
+            }
+            const mergedBytes = await merged.save();
+
+            // 4. Trigger download.
+            const url = URL.createObjectURL(new Blob([mergedBytes], { type: 'application/pdf' }));
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Shaarei_Avodah_${spans[0].startDate}_to_${spans[spans.length - 1].endDate}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            alert('Batch PDF failed: ' + (err?.message || err));
+        } finally {
+            btn.disabled = false;
+            btn.textContent = origLabel;
+        }
     });
     document.getElementById('previewEmail').addEventListener('click', () => {
         window.open('/api/admin/schedules/preview-email?sunday=' + state.sunday, '_blank');

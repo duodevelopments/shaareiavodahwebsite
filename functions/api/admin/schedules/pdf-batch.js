@@ -106,6 +106,21 @@ export async function onRequestGet(context) {
     (a, b) => compareCivil(a.startDate, b.startDate)
   );
 
+  // ?plan=1 short-circuit: return JSON list of spans without rendering. The
+  // admin UI uses this to fan out per-span renders (one Pages Functions
+  // invocation per span = one CPU budget per span = no resource-limit blowups).
+  if (url.searchParams.get('plan') === '1') {
+    return new Response(
+      JSON.stringify({
+        spans: spans.map((s) => ({
+          startDate: formatCivil(s.startDate),
+          endDate: formatCivil(s.endDate),
+        })),
+      }),
+      { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } }
+    );
+  }
+
   // 4. Resolve each span to a full schedule (with overrides + announcements).
   const resolved = [];
   for (const { startDate, endDate } of spans) {
