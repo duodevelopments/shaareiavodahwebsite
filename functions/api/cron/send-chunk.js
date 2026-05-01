@@ -1,7 +1,7 @@
 import {
   processChunk,
   parseISODate,
-  upcomingSundayDetroit,
+  currentWeekSundayDetroit,
   DEFAULT_CHUNK_LIMIT,
 } from '../../lib/send-chunk.js';
 
@@ -46,7 +46,7 @@ export async function onRequestPost(context) {
 
   let sundayCivil;
   try {
-    sundayCivil = sunday ? parseISODate(sunday) : upcomingSundayDetroit();
+    sundayCivil = sunday ? parseISODate(sunday) : currentWeekSundayDetroit();
   } catch {
     return json({ error: 'Invalid sunday date' }, 400);
   }

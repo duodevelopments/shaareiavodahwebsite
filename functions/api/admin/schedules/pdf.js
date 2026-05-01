@@ -11,6 +11,17 @@ import { cacheKey, getCached, putCached } from '../../../lib/pdf-cache.js';
  * batch flow for orphan Yom Tov spans that don't align to a Sunday).
  */
 export async function onRequestGet(context) {
+  try {
+    return await handle(context);
+  } catch (err) {
+    return new Response(
+      `pdf endpoint error: ${err?.message || err}\n${err?.stack || ''}`,
+      { status: 500, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
+    );
+  }
+}
+
+async function handle(context) {
   const { env } = context;
   const url = new URL(context.request.url);
   const sundayParam = url.searchParams.get('sunday');

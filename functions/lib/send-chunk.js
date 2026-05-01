@@ -269,7 +269,9 @@ export function parseISODate(s) {
   return { year: +m[1], month: +m[2], day: +m[3] };
 }
 
-export function upcomingSundayDetroit() {
+// Most recent Sunday on or before today (Detroit-local). For the Friday weekly
+// auto-send this picks the current week's Shabbos schedule, not next week's.
+export function currentWeekSundayDetroit() {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Detroit',
     year: 'numeric',
@@ -283,8 +285,7 @@ export function upcomingSundayDetroit() {
   const wk = parts.find((p) => p.type === 'weekday').value;
   const dowMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
   const dow = dowMap[wk];
-  const delta = (7 - dow) % 7;
-  const utc = new Date(Date.UTC(y, m - 1, d + delta, 12));
+  const utc = new Date(Date.UTC(y, m - 1, d - dow, 12));
   return { year: utc.getUTCFullYear(), month: utc.getUTCMonth() + 1, day: utc.getUTCDate() };
 }
 

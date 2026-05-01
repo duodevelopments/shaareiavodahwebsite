@@ -1148,7 +1148,10 @@
             btn.textContent = `Fetching 0/${total}…`;
             const blobs = await Promise.all(spans.map(async (s) => {
                 const res = await fetch(`/api/admin/schedules/pdf?startDate=${s.startDate}&endDate=${s.endDate}`);
-                if (!res.ok) throw new Error(`PDF ${s.startDate}: HTTP ${res.status}`);
+                if (!res.ok) {
+                    const body = await res.text().catch(() => '');
+                    throw new Error(`PDF ${s.startDate} HTTP ${res.status}: ${body.slice(0, 500)}`);
+                }
                 const bytes = new Uint8Array(await res.arrayBuffer());
                 done++;
                 btn.textContent = `Fetching ${done}/${total}…`;
