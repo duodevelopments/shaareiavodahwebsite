@@ -57,8 +57,8 @@ export async function generatePDF({
 
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
-  const fontHebrew = await pdf.embedFont(hebrewFontData, { subset: true });
-  const fontLatin = await pdf.embedFont(latinFontData, { subset: true });
+  const fontHebrew = await pdf.embedFont(hebrewFontData, { subset: false });
+  const fontLatin = await pdf.embedFont(latinFontData, { subset: false });
   const logoImg = logoData ? await pdf.embedPng(logoData) : null;
   const compactLogoImg = compactLogoData ? await pdf.embedPng(compactLogoData) : null;
 
