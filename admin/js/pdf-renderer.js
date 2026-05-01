@@ -57,14 +57,14 @@
     const pdf = await PDFDocument.create();
     pdf.registerFontkit(fontkit);
     const fontHebrew = await pdf.embedFont(hebrewFontData, { subset: false });
-    // Latin: pdf-lib's built-in Helvetica. We tried embedding Bona Nova
-    // (latinFontData) here, but the @pdf-lib/fontkit UMD bundle drops some
-    // glyphs from the TTF cmap in browsers (notably ":", "0", "9"), so digits
-    // come out garbled. Helvetica is bundled and renders reliably.
-    // latinFontData is intentionally unused for now — kept in the signature
-    // so we can swap a working TTF back in without changing call sites.
-    void latinFontData;
-    const fontLatin = await pdf.embedFont(StandardFonts.Helvetica);
+    // Bona Nova for Latin text. The earlier copy of BonaNova-Regular.ttf
+    // dropped digits + colon when fontkit parsed it in the browser; the
+    // current file is the canonical Google Fonts build, which round-trips
+    // through @pdf-lib/fontkit correctly. If you swap fonts again and digits
+    // start dropping, fall back to StandardFonts.Helvetica as a safety net.
+    const fontLatin = latinFontData
+      ? await pdf.embedFont(latinFontData, { subset: false })
+      : await pdf.embedFont(StandardFonts.Helvetica);
     const logoImg = logoData ? await pdf.embedPng(logoData) : null;
     const compactLogoImg = compactLogoData ? await pdf.embedPng(compactLogoData) : null;
 

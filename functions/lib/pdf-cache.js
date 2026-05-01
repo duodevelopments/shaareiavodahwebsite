@@ -15,7 +15,7 @@
  * R2 configured, etc.) — render path still works, just uncached.
  */
 
-const RENDERER_VERSION = 2;
+const RENDERER_VERSION = 3;
 
 export async function cacheKey({ schedule, announcements, layout }) {
   const canonical = JSON.stringify({
