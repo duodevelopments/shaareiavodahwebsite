@@ -1,5 +1,4 @@
 import { PDFDocument } from 'pdf-lib';
-import fontkit from '@pdf-lib/fontkit';
 import {
   generateSpan,
   planWeekSpan,
@@ -7,8 +6,9 @@ import {
   HOLIDAY_TAGS,
 } from '../../../lib/generator.js';
 import { seedRules } from '../../../lib/rules-seed.js';
-import { renderSchedulePage } from '../../../lib/pdf-template.js';
+import { generatePDF } from '../../../lib/pdf-template.js';
 import { buildDayContext } from '../../../lib/zmanim.js';
+import { cacheKey, getCached, putCached } from '../../../lib/pdf-cache.js';
 
 const DEFAULT_WEEKS = 10;
 const MAX_WEEKS = 26;
@@ -115,39 +115,54 @@ export async function onRequestGet(context) {
     resolved.push({ schedule, announcements, layout });
   }
 
-  // 5. Build a single PDF, embedding fonts + logos once.
-  const [logoRes, compactLogoRes, hebrewFontRes, latinFontRes] = await Promise.all([
-    fetch(new URL('/d/Logo%20Header.png', context.request.url)),
-    fetch(new URL('/d/Logo%20Compact.png', context.request.url)),
-    fetch(new URL('/d/51618.otf', context.request.url)),
-    fetch(new URL('/d/BonaNova-Regular.ttf', context.request.url)),
-  ]);
-  if (!hebrewFontRes.ok) {
-    return new Response('Hebrew font not found at /d/51618.otf', { status: 500 });
-  }
-  if (!latinFontRes.ok) {
-    return new Response('Latin font not found at /d/BonaNova-Regular.ttf', { status: 500 });
-  }
-  const logoData = logoRes.ok ? new Uint8Array(await logoRes.arrayBuffer()) : null;
-  const compactLogoData = compactLogoRes.ok ? new Uint8Array(await compactLogoRes.arrayBuffer()) : null;
-  const hebrewFontData = new Uint8Array(await hebrewFontRes.arrayBuffer());
-  const latinFontData = new Uint8Array(await latinFontRes.arrayBuffer());
+  // 5. Resolve cache hits in parallel; lazy-load assets only if any miss.
+  const cacheKeys = await Promise.all(
+    resolved.map((r) => cacheKey({ schedule: r.schedule, announcements: r.announcements, layout: r.layout }))
+  );
+  const pageBlobs = await Promise.all(cacheKeys.map((k) => getCached(env, k)));
+  const anyMiss = pageBlobs.some((b) => b === null);
 
-  const pdf = await PDFDocument.create();
-  pdf.registerFontkit(fontkit);
-  const fontHebrew = await pdf.embedFont(hebrewFontData, { subset: false });
-  const fontLatin = await pdf.embedFont(latinFontData, { subset: false });
-  const logoImg = logoData ? await pdf.embedPng(logoData) : null;
-  const compactLogoImg = compactLogoData ? await pdf.embedPng(compactLogoData) : null;
+  if (anyMiss) {
+    const [logoRes, compactLogoRes, hebrewFontRes, latinFontRes] = await Promise.all([
+      fetch(new URL('/d/Logo%20Header.png', context.request.url)),
+      fetch(new URL('/d/Logo%20Compact.png', context.request.url)),
+      fetch(new URL('/d/51618.otf', context.request.url)),
+      fetch(new URL('/d/BonaNova-Regular.ttf', context.request.url)),
+    ]);
+    if (!hebrewFontRes.ok) {
+      return new Response('Hebrew font not found at /d/51618.otf', { status: 500 });
+    }
+    if (!latinFontRes.ok) {
+      return new Response('Latin font not found at /d/BonaNova-Regular.ttf', { status: 500 });
+    }
+    const logoData = logoRes.ok ? new Uint8Array(await logoRes.arrayBuffer()) : null;
+    const compactLogoData = compactLogoRes.ok ? new Uint8Array(await compactLogoRes.arrayBuffer()) : null;
+    const hebrewFontData = new Uint8Array(await hebrewFontRes.arrayBuffer());
+    const latinFontData = new Uint8Array(await latinFontRes.arrayBuffer());
 
-  for (const { schedule, announcements, layout } of resolved) {
-    renderSchedulePage({
-      pdf, fontHebrew, fontLatin, logoImg, compactLogoImg,
-      schedule, announcements, layout,
-    });
+    // Render each missing page, then cache it. Sequential to keep CPU bounded
+    // — pdf-lib is synchronous between awaits, so parallel renders share
+    // the same isolate and don't actually overlap.
+    for (let i = 0; i < resolved.length; i++) {
+      if (pageBlobs[i]) continue;
+      const { schedule, announcements, layout } = resolved[i];
+      const bytes = await generatePDF({
+        schedule, announcements, logoData, compactLogoData,
+        hebrewFontData, latinFontData, layout,
+      });
+      pageBlobs[i] = bytes;
+      await putCached(env, cacheKeys[i], bytes);
+    }
   }
 
-  const pdfBytes = await pdf.save();
+  // 6. Merge all single-page PDFs into one document via copyPages.
+  const merged = await PDFDocument.create();
+  for (const bytes of pageBlobs) {
+    const src = await PDFDocument.load(bytes);
+    const pages = await merged.copyPages(src, src.getPageIndices());
+    pages.forEach((p) => merged.addPage(p));
+  }
+  const pdfBytes = await merged.save();
 
   const filename = `Shaarei_Avodah_${formatCivil(startCivil)}_to_${formatCivil(windowEndCivil)}.pdf`;
   return new Response(pdfBytes, {

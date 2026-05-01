@@ -2,6 +2,7 @@ import { generateWeek } from '../../lib/generator.js';
 import { seedRules } from '../../lib/rules-seed.js';
 import { generateDocx } from '../../lib/docx-template.js';
 import { generatePDF } from '../../lib/pdf-template.js';
+import { cacheKey, getCached, putCached } from '../../lib/pdf-cache.js';
 
 /**
  * POST /api/cron/friday-docx
@@ -66,23 +67,42 @@ export async function onRequestPost(context) {
     .all();
   const announcements = annRows.results || [];
 
-  // Fetch logos + both fonts from static assets.
-  const [logoRes, compactLogoRes, hebrewFontRes, latinFontRes] = await Promise.all([
+  // Try the PDF cache first — if the gabbai already viewed/saved this week's
+  // sheet, the rendered PDF is already in R2.
+  const pdfKey = await cacheKey({ schedule, announcements, layout });
+  let pdfBuffer = await getCached(env, pdfKey);
+
+  // Fetch logos for the docx (always needed) + fonts only if we'll re-render.
+  const logoFetches = [
     fetch(new URL('/d/Logo%20Header.png', request.url)),
     fetch(new URL('/d/Logo%20Compact.png', request.url)),
-    fetch(new URL('/d/51618.otf', request.url)),
-    fetch(new URL('/d/BonaNova-Regular.ttf', request.url)),
+  ];
+  const fontFetches = pdfBuffer
+    ? []
+    : [
+        fetch(new URL('/d/51618.otf', request.url)),
+        fetch(new URL('/d/BonaNova-Regular.ttf', request.url)),
+      ];
+  const [logoRes, compactLogoRes, hebrewFontRes, latinFontRes] = await Promise.all([
+    ...logoFetches,
+    ...fontFetches,
   ]);
   const logoData = logoRes.ok ? new Uint8Array(await logoRes.arrayBuffer()) : null;
   const compactLogoData = compactLogoRes.ok ? new Uint8Array(await compactLogoRes.arrayBuffer()) : null;
-  const hebrewFontData = hebrewFontRes.ok ? new Uint8Array(await hebrewFontRes.arrayBuffer()) : null;
-  const latinFontData = latinFontRes.ok ? new Uint8Array(await latinFontRes.arrayBuffer()) : null;
+  const hebrewFontData = hebrewFontRes?.ok ? new Uint8Array(await hebrewFontRes.arrayBuffer()) : null;
+  const latinFontData = latinFontRes?.ok ? new Uint8Array(await latinFontRes.arrayBuffer()) : null;
 
-  // Generate both the docx and the PDF.
+  // Generate the docx.
   const docxBuffer = await generateDocx({ schedule, announcements, logoData });
-  const pdfBuffer = hebrewFontData && latinFontData
-    ? await generatePDF({ schedule, announcements, logoData, compactLogoData, hebrewFontData, latinFontData, layout })
-    : null;
+
+  // Render the PDF only on cache miss; cache the result for future hits.
+  if (!pdfBuffer && hebrewFontData && latinFontData) {
+    pdfBuffer = await generatePDF({
+      schedule, announcements, logoData, compactLogoData,
+      hebrewFontData, latinFontData, layout,
+    });
+    await putCached(env, pdfKey, pdfBuffer);
+  }
 
   const baseName = schedule.label
     ? `Shaarei_Avodah_${schedule.label.replace(/\s+/g, '_')}_${schedule.startDate}`

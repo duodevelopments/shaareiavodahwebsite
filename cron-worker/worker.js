@@ -4,7 +4,6 @@
  *
  * Triggers (configured in wrangler.toml):
  *   - "0 17 * * *"  Daily 17:00 UTC = 1:00 PM EDT / 12:00 PM EST.
- *       - Sunday: weekly-draft (generate + email gabbai)
  *       - Friday: chunked weekly send to subscribers tagged "Weekly"
  *       - Daily : holiday-check detection + chunked send if today is erev YT
  *   - "0 12 * * 5"  Friday 12:00 UTC = 8:00 AM EDT — friday-docx (printable)
@@ -46,12 +45,6 @@ export default {
     }
 
     // Daily 17:00 UTC.
-    if (dayOfWeek === 0) {
-      console.log('Running weekly-draft...');
-      const res = await fetch(`${siteUrl}/api/cron/weekly-draft`, { method: 'POST', headers, body: '{}' });
-      console.log('weekly-draft response:', res.status, await res.text());
-    }
-
     if (dayOfWeek === 5) {
       if (autoSendEnabled) {
         console.log('Running Friday weekly send...');

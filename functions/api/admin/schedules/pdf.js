@@ -1,6 +1,7 @@
 import { generateWeek } from '../../../lib/generator.js';
 import { seedRules } from '../../../lib/rules-seed.js';
 import { generatePDF } from '../../../lib/pdf-template.js';
+import { cacheKey, getCached, putCached } from '../../../lib/pdf-cache.js';
 
 /**
  * GET /api/schedules/pdf?sunday=YYYY-MM-DD
@@ -47,6 +48,25 @@ export async function onRequestGet(context) {
   const annRows = await env.DB.prepare(
     'SELECT * FROM announcements WHERE show_from <= ? AND show_until >= ? ORDER BY show_from ASC'
   ).bind(schedule.endDate, schedule.startDate).all();
+  const announcements = annRows.results || [];
+
+  const filename = schedule.label
+    ? `Shaarei_Avodah_${schedule.label.replace(/\s+/g, '_')}_${schedule.startDate}.pdf`
+    : `Shaarei_Avodah_${schedule.startDate}.pdf`;
+
+  // Cache lookup — skip the heavy render entirely on a hit.
+  const key = await cacheKey({ schedule, announcements, layout });
+  const cached = await getCached(env, key);
+  if (cached) {
+    return new Response(cached, {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Cache-Control': 'no-store',
+        'X-Pdf-Cache': 'hit',
+      },
+    });
+  }
 
   // Fetch logos + both fonts from static assets.
   const [logoRes, compactLogoRes, hebrewFontRes, latinFontRes] = await Promise.all([
@@ -70,7 +90,7 @@ export async function onRequestGet(context) {
 
   const pdfBytes = await generatePDF({
     schedule,
-    announcements: annRows.results || [],
+    announcements,
     logoData,
     compactLogoData,
     hebrewFontData,
@@ -78,15 +98,14 @@ export async function onRequestGet(context) {
     layout,
   });
 
-  const filename = schedule.label
-    ? `Shaarei_Avodah_${schedule.label.replace(/\s+/g, '_')}_${schedule.startDate}.pdf`
-    : `Shaarei_Avodah_${schedule.startDate}.pdf`;
+  await putCached(env, key, pdfBytes);
 
   return new Response(pdfBytes, {
     headers: {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="${filename}"`,
       'Cache-Control': 'no-store',
+      'X-Pdf-Cache': 'miss',
     },
   });
 }

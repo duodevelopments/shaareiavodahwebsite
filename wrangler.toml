@@ -13,3 +13,11 @@ CF_ACCESS_TEAM_DOMAIN = "smartsitestudio.cloudflareaccess.com"
 binding = "DB"
 database_name = "shaareiavodah"
 database_id = "378b3152-b346-4fe8-a121-d5e4f7b4388d"
+
+# Content-addressed cache for rendered single-page PDFs. Bucket has a 120-day
+# lifecycle rule so orphaned hashes (after override edits) get reaped.
+# Code in functions/lib/pdf-cache.js no-ops if this binding is missing, so
+# local dev works without R2 configured.
+[[r2_buckets]]
+binding = "PDF_CACHE"
+bucket_name = "shaareiavodah-pdf-cache"
