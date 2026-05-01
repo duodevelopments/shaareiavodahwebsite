@@ -15,7 +15,7 @@
  *   });
  */
 (function (global) {
-  const { PDFDocument, rgb } = global.PDFLib;
+  const { PDFDocument, StandardFonts, rgb } = global.PDFLib;
   const fontkit = global.fontkit;
 
   const COLOR = rgb(0x23 / 255, 0x21 / 255, 0x40 / 255);
@@ -57,7 +57,14 @@
     const pdf = await PDFDocument.create();
     pdf.registerFontkit(fontkit);
     const fontHebrew = await pdf.embedFont(hebrewFontData, { subset: false });
-    const fontLatin = await pdf.embedFont(latinFontData, { subset: false });
+    // Latin: pdf-lib's built-in Helvetica. We tried embedding Bona Nova
+    // (latinFontData) here, but the @pdf-lib/fontkit UMD bundle drops some
+    // glyphs from the TTF cmap in browsers (notably ":", "0", "9"), so digits
+    // come out garbled. Helvetica is bundled and renders reliably.
+    // latinFontData is intentionally unused for now — kept in the signature
+    // so we can swap a working TTF back in without changing call sites.
+    void latinFontData;
+    const fontLatin = await pdf.embedFont(StandardFonts.Helvetica);
     const logoImg = logoData ? await pdf.embedPng(logoData) : null;
     const compactLogoImg = compactLogoData ? await pdf.embedPng(compactLogoData) : null;
 
